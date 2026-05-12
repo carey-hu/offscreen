@@ -1,0 +1,34 @@
+{
+  "name": "openfocus-pwa",
+  "version": "0.1.0",
+  "private": false,
+  "description": "An open-source Pomodoro and focus analytics PWA inspired by screen-time focus tools.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.468.0",
+    "recharts": "^2.15.0",
+    "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.7",
+    "vite-plugin-pwa": "^0.21.1",
+    "typescript": "^5.7.2",
+    "eslint": "^9.17.0",
+    "typescript-eslint": "^8.19.0",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@types/uuid": "^10.0.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17"
+  }
+}

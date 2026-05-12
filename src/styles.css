@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-gray-950 transition hover:bg-gray-200;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 rounded-2xl bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center gap-2 rounded-2xl bg-red-500/90 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-500;
+  }
+
+  .settings-btn {
+    @apply flex items-center gap-2 rounded-2xl bg-gray-50 px-4 py-3 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-100;
+  }
+}
