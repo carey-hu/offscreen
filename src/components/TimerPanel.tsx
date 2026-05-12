@@ -27,22 +27,45 @@ export function TimerPanel({ onSave }: Props) {
   const [pauseStartedAt, setPauseStartedAt] = useState<number | null>(null);
   const [pausedMs, setPausedMs] = useState(0);
   const [now, setNow] = useState(Date.now());
-  const [lastTickAt, setLastTickAt] = useState<number | null>(null);
+  const [accumulatedHiddenMs, setAccumulatedHiddenMs] = useState(0);
+  const [lastHiddenAt, setLastHiddenAt] = useState<number | null>(null);
+  const [isInterrupted, setIsInterrupted] = useState(false);
   const sessionIdRef = useRef<string | null>(null);
 
   // Flip mode logic
   useEffect(() => {
-    if (mode !== "flip" || !running || paused) return;
+    if (mode !== "flip" || !running || paused) {
+      setIsInterrupted(false);
+      return;
+    }
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        // App became visible, in real OffScreen this would pause or fail the session
-        // For web, we can just track if they left the page
+      const timestamp = Date.now();
+      if (document.visibilityState === "hidden") {
+        setLastHiddenAt(timestamp);
+        setIsInterrupted(false);
+      } else {
+        if (lastHiddenAt) {
+          setAccumulatedHiddenMs((prev) => prev + (timestamp - lastHiddenAt));
+        }
+        setLastHiddenAt(null);
+        setIsInterrupted(true);
       }
     };
 
+    // Initialize state
+    if (document.visibilityState === "hidden") {
+      setLastHiddenAt(Date.now());
+      setIsInterrupted(false);
+    } else {
+      setIsInterrupted(true);
+    }
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      setIsInterrupted(false);
+    };
   }, [mode, running, paused]);
 
   const plannedMinutes = useMemo(() => {
@@ -53,13 +76,16 @@ export function TimerPanel({ onSave }: Props) {
 
   const elapsedMs = useMemo(() => {
     if (!startedAt) return 0;
+
+    if (mode === "flip") {
+      const currentHiddenExtra = (lastHiddenAt && !paused) ? now - lastHiddenAt : 0;
+      return Math.max(0, accumulatedHiddenMs + currentHiddenExtra);
+    }
+
     const pauseExtra = paused && pauseStartedAt ? now - pauseStartedAt : 0;
     const baseElapsed = now - startedAt - pausedMs - pauseExtra;
-
-    // In flip mode, if the page is visible, the timer doesn't progress (simulating face down)
-    // However, for simpler implementation, we'll just show a warning UI later.
     return Math.max(0, baseElapsed);
-  }, [now, paused, pauseStartedAt, pausedMs, startedAt]);
+  }, [now, paused, pauseStartedAt, pausedMs, startedAt, mode, accumulatedHiddenMs, lastHiddenAt]);
 
   const targetMs = plannedMinutes * 60 * 1000;
 
@@ -96,6 +122,8 @@ export function TimerPanel({ onSave }: Props) {
     setPauseStartedAt(null);
     setPaused(false);
     setRunning(true);
+    setAccumulatedHiddenMs(0);
+    setLastHiddenAt(document.visibilityState === "hidden" ? Date.now() : null);
 
     if ("Notification" in window && Notification.permission === "default") {
       await Notification.requestPermission();
@@ -156,11 +184,25 @@ export function TimerPanel({ onSave }: Props) {
     setStartedAt(null);
     setPauseStartedAt(null);
     setPausedMs(0);
+    setAccumulatedHiddenMs(0);
+    setLastHiddenAt(null);
+    setIsInterrupted(false);
     sessionIdRef.current = null;
   }
 
   return (
-    <section className="offscreen-card text-white">
+    <section className="relative offscreen-card text-white overflow-hidden">
+      {/* Interruption Overlay for Flip Mode */}
+      {mode === "flip" && running && !paused && isInterrupted && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md p-8 text-center animate-in fade-in duration-500">
+          <Smartphone size={64} className="mb-6 text-white animate-bounce" />
+          <h3 className="text-2xl font-black mb-4">专注已中断</h3>
+          <p className="text-gray-400 font-bold uppercase tracking-widest text-xs leading-relaxed">
+            翻转模式要求保持手机扣放<br />请切回其他标签或遮盖屏幕以继续
+          </p>
+        </div>
+      )}
+
       <div className="mb-8 flex items-center justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Focus Session</p>

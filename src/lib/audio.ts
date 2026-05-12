@@ -1,49 +1,92 @@
 import { WhiteNoiseTrack } from "../types";
 
+type AudioStatus = {
+  isPlaying: boolean;
+  currentTrackId: string | null;
+  volume: number;
+};
+
 class AudioController {
-  private audio: HTMLAudioElement | null = null;
+  private audio: HTMLAudioElement;
   private currentTrackId: string | null = null;
+  private listeners: ((status: AudioStatus) => void)[] = [];
+  private volume: number = 0.5;
+
+  constructor() {
+    this.audio = new Audio();
+    this.audio.loop = true;
+    this.audio.volume = this.volume;
+
+    this.audio.onplay = () => this.notify();
+    this.audio.onpause = () => this.notify();
+    this.audio.onended = () => this.notify();
+    this.audio.onerror = () => {
+      console.error("Audio playback error");
+      this.currentTrackId = null;
+      this.notify();
+    };
+  }
+
+  private notify() {
+    const status = this.getStatus();
+    this.listeners.forEach((l) => l(status));
+  }
+
+  subscribe(listener: (status: AudioStatus) => void) {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter((l) => l !== listener);
+    };
+  }
+
+  getStatus(): AudioStatus {
+    return {
+      isPlaying: !this.audio.paused && this.audio.readyState > 0,
+      currentTrackId: this.currentTrackId,
+      volume: this.volume
+    };
+  }
 
   play(track: WhiteNoiseTrack) {
-    if (this.currentTrackId === track.id && this.audio) {
-      this.audio.play();
+    if (this.currentTrackId === track.id) {
+      if (this.audio.paused) {
+        this.audio.play().catch(console.error);
+      }
       return;
     }
 
-    if (this.audio) {
-      this.audio.pause();
-    }
-
-    this.audio = new Audio(track.url);
-    this.audio.loop = true;
-    this.audio.play();
+    this.audio.pause();
+    this.audio.src = track.url;
+    this.audio.load();
+    this.audio.play().catch(console.error);
     this.currentTrackId = track.id;
+    this.notify();
   }
 
   pause() {
-    this.audio?.pause();
+    this.audio.pause();
+    this.notify();
   }
 
   stop() {
-    if (this.audio) {
-      this.audio.pause();
-      this.audio = null;
-      this.currentTrackId = null;
-    }
+    this.audio.pause();
+    this.audio.src = "";
+    this.currentTrackId = null;
+    this.notify();
   }
 
   setVolume(volume: number) {
-    if (this.audio) {
-      this.audio.volume = volume;
-    }
-  }
-
-  isPlaying() {
-    return this.audio ? !this.audio.paused : false;
+    this.volume = volume;
+    this.audio.volume = volume;
+    this.notify();
   }
 
   getCurrentTrackId() {
     return this.currentTrackId;
+  }
+
+  isPlaying() {
+    return !this.audio.paused;
   }
 }
 
