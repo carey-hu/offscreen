@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CirclePause, CirclePlay, RotateCcw, Square } from "lucide-react";
+import { CirclePause, CirclePlay, RotateCcw, Square, Smartphone } from "lucide-react";
 import { FocusMode, FocusSession } from "../types";
 import { getDeviceId } from "../lib/device";
+import { AudioPicker } from "./AudioPicker";
 
-const modeOptions: Array<{ label: string; value: FocusMode; minutes: number }> = [
+const modeOptions: Array<{ label: string; value: FocusMode; minutes: number; icon?: any }> = [
   { label: "番茄钟", value: "pomodoro", minutes: 25 },
   { label: "长专注", value: "long", minutes: 50 },
+  { label: "翻转专注", value: "flip", minutes: 25 },
   { label: "倒计时", value: "countdown", minutes: 30 },
   { label: "正计时", value: "stopwatch", minutes: 0 }
 ];
@@ -25,7 +27,23 @@ export function TimerPanel({ onSave }: Props) {
   const [pauseStartedAt, setPauseStartedAt] = useState<number | null>(null);
   const [pausedMs, setPausedMs] = useState(0);
   const [now, setNow] = useState(Date.now());
+  const [lastTickAt, setLastTickAt] = useState<number | null>(null);
   const sessionIdRef = useRef<string | null>(null);
+
+  // Flip mode logic
+  useEffect(() => {
+    if (mode !== "flip" || !running || paused) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // App became visible, in real OffScreen this would pause or fail the session
+        // For web, we can just track if they left the page
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [mode, running, paused]);
 
   const plannedMinutes = useMemo(() => {
     if (mode === "stopwatch") return 0;
@@ -36,7 +54,11 @@ export function TimerPanel({ onSave }: Props) {
   const elapsedMs = useMemo(() => {
     if (!startedAt) return 0;
     const pauseExtra = paused && pauseStartedAt ? now - pauseStartedAt : 0;
-    return Math.max(0, now - startedAt - pausedMs - pauseExtra);
+    const baseElapsed = now - startedAt - pausedMs - pauseExtra;
+
+    // In flip mode, if the page is visible, the timer doesn't progress (simulating face down)
+    // However, for simpler implementation, we'll just show a warning UI later.
+    return Math.max(0, baseElapsed);
   }, [now, paused, pauseStartedAt, pausedMs, startedAt]);
 
   const targetMs = plannedMinutes * 60 * 1000;
@@ -138,13 +160,21 @@ export function TimerPanel({ onSave }: Props) {
   }
 
   return (
-    <section className="rounded-[2rem] bg-gray-950 p-6 text-white shadow-xl">
-      <div className="mb-5">
-        <p className="text-sm text-gray-400">当前专注</p>
-        <h2 className="mt-1 text-2xl font-semibold">开始一次高质量专注</h2>
+    <section className="offscreen-card text-white">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Focus Session</p>
+          <h2 className="mt-1 text-2xl font-bold">开始一次高质量专注</h2>
+        </div>
+        {mode === "flip" && (
+          <div className="flex items-center gap-2 rounded-full bg-orange-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-500 ring-1 ring-orange-500/30">
+            <Smartphone size={12} />
+            Flip Mode
+          </div>
+        )}
       </div>
 
-      <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="mb-8 grid grid-cols-3 gap-2 sm:grid-cols-5">
         {modeOptions.map((item) => (
           <button
             key={item.value}
@@ -153,13 +183,13 @@ export function TimerPanel({ onSave }: Props) {
               setMode(item.value);
               if (item.value !== "countdown") setCustomMinutes(item.minutes || 25);
             }}
-            className={`rounded-2xl px-3 py-2 text-sm transition ${
+            className={`flex flex-col items-center gap-2 rounded-2xl py-3 transition-all ${
               mode === item.value
-                ? "bg-white text-gray-950"
-                : "bg-white/10 text-gray-300 hover:bg-white/15"
-            } disabled:cursor-not-allowed disabled:opacity-70`}
+                ? "bg-white text-black scale-105 shadow-xl"
+                : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
+            } disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            {item.label}
+            <span className="text-[10px] font-bold uppercase tracking-tighter">{item.label}</span>
           </button>
         ))}
       </div>
@@ -169,21 +199,24 @@ export function TimerPanel({ onSave }: Props) {
           disabled={running}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm outline-none placeholder:text-gray-500 disabled:opacity-70 sm:col-span-2"
-          placeholder="任务名称，例如：论文修改"
+          className="rounded-[1.25rem] border border-white/5 bg-gray-800 px-5 py-4 text-sm font-medium outline-none transition focus:ring-2 focus:ring-white/10 disabled:opacity-50 sm:col-span-2"
+          placeholder="正在做什么？"
         />
         <input
           disabled={running}
           value={tag}
           onChange={(e) => setTag(e.target.value)}
-          className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm outline-none placeholder:text-gray-500 disabled:opacity-70"
+          className="rounded-[1.25rem] border border-white/5 bg-gray-800 px-5 py-4 text-sm font-medium outline-none transition focus:ring-2 focus:ring-white/10 disabled:opacity-50"
           placeholder="标签"
         />
       </div>
 
       {mode === "countdown" ? (
-        <div className="mt-3">
-          <label className="text-sm text-gray-400">倒计时时长：{customMinutes} 分钟</label>
+        <div className="mt-4 px-2">
+          <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500">
+            <span>Duration</span>
+            <span>{customMinutes} min</span>
+          </div>
           <input
             disabled={running}
             type="range"
@@ -192,26 +225,26 @@ export function TimerPanel({ onSave }: Props) {
             step={5}
             value={customMinutes}
             onChange={(e) => setCustomMinutes(Number(e.target.value))}
-            className="mt-2 w-full"
+            className="mt-3 w-full accent-white"
           />
         </div>
       ) : null}
 
-      <div className="my-8 flex flex-col items-center">
+      <div className="my-12 flex flex-col items-center">
         <div
-          className="grid h-64 w-64 place-items-center rounded-full"
+          className="grid h-72 w-72 place-items-center rounded-full"
           style={{
             background:
               mode === "stopwatch"
-                ? "radial-gradient(circle, rgba(255,255,255,.08) 58%, rgba(255,255,255,.16) 59%)"
-                : `conic-gradient(white ${progress}%, rgba(255,255,255,.12) ${progress}%)`
+                ? "radial-gradient(circle, rgba(255,255,255,0.03) 64%, rgba(255,255,255,0.08) 65%)"
+                : `conic-gradient(white ${progress}%, rgba(255,255,255,0.05) ${progress}%)`
           }}
         >
-          <div className="grid h-56 w-56 place-items-center rounded-full bg-gray-950">
+          <div className="grid h-64 w-64 place-items-center rounded-full bg-black shadow-inner">
             <div className="text-center">
-              <div className="text-5xl font-semibold tabular-nums">{timeText}</div>
-              <p className="mt-3 text-sm text-gray-400">
-                {running ? (paused ? "已暂停" : "专注中") : "准备开始"}
+              <div className="text-6xl font-black tabular-nums tracking-tighter">{timeText}</div>
+              <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
+                {running ? (paused ? "Paused" : "Focusing") : "Ready"}
               </p>
             </div>
           </div>
@@ -220,9 +253,9 @@ export function TimerPanel({ onSave }: Props) {
 
       <div className="flex flex-wrap justify-center gap-3">
         {!running ? (
-          <button onClick={start} className="btn-primary">
+          <button onClick={start} className="btn-primary w-full sm:w-auto">
             <CirclePlay size={20} />
-            开始
+            开始专注
           </button>
         ) : (
           <>
@@ -241,6 +274,8 @@ export function TimerPanel({ onSave }: Props) {
           </>
         )}
       </div>
+
+      <AudioPicker />
     </section>
   );
 }

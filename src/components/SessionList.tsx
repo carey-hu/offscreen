@@ -16,48 +16,48 @@ const statusText = {
 
 export function SessionList({ sessions, onRemove }: Props) {
   return (
-    <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">专注记录</h3>
-          <p className="text-sm text-gray-500">本地 IndexedDB 保存，后续可扩展云同步</p>
-        </div>
+    <section className="offscreen-card">
+      <div className="mb-6">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">History</p>
+        <h3 className="mt-1 text-2xl font-black">专注历史</h3>
       </div>
 
       {sessions.length === 0 ? (
-        <div className="rounded-2xl bg-gray-50 p-6 text-center text-sm text-gray-500">
+        <div className="rounded-[1.5rem] bg-gray-800/50 p-8 text-center text-sm font-semibold text-gray-500">
           暂无记录。先完成一次专注吧。
         </div>
       ) : (
-        <div className="divide-y divide-gray-100">
-          {sessions.slice(0, 20).map((session) => (
-            <div key={session.id} className="flex items-center justify-between gap-3 py-4">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate font-medium text-gray-900">{session.title}</p>
-                  <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">{session.tag}</span>
-                  <span
-                    className={`rounded-full px-2 py-1 text-xs ${
-                      session.status === "completed"
-                        ? "bg-green-50 text-green-700"
-                        : "bg-orange-50 text-orange-700"
-                    }`}
-                  >
-                    {statusText[session.status]}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-gray-500">
-                  {format(new Date(session.startTime), "yyyy-MM-dd HH:mm")} · 实际 {session.actualMinutes} 分钟 · 计划 {session.plannedMinutes || "不限"} 分钟
-                </p>
+        <div className="space-y-4">
+          {sessions.slice(0, 20).map((session, index) => (
+            <div key={session.id} className="relative flex gap-6">
+              {/* Timeline Connector */}
+              {index !== sessions.slice(0, 20).length - 1 && (
+                <div className="absolute left-3 top-8 h-full w-[2px] bg-gray-800" />
+              )}
+
+              <div className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-800">
+                <div className={`h-2 w-2 rounded-full ${session.status === 'completed' ? 'bg-white' : 'bg-red-500'}`} />
               </div>
 
-              <button
-                onClick={() => onRemove(session.id)}
-                className="rounded-2xl p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
-                aria-label="删除记录"
-              >
-                <Trash2 size={18} />
-              </button>
+              <div className="flex flex-1 items-center justify-between gap-4 pb-6">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <p className="text-base font-bold text-white">{session.title}</p>
+                    <span className="rounded-lg bg-gray-800 px-2 py-1 text-[10px] font-black uppercase text-gray-400">{session.tag}</span>
+                  </div>
+                  <p className="mt-1 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    {format(new Date(session.startTime), "HH:mm")} · {session.actualMinutes}m · {session.mode}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => onRemove(session.id)}
+                  className="rounded-xl p-2 text-gray-700 transition hover:bg-red-500/10 hover:text-red-500"
+                  aria-label="删除记录"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           ))}
         </div>

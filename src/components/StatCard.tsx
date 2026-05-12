@@ -9,13 +9,13 @@ interface Props {
 
 export function StatCard({ title, value, icon, hint }: Props) {
   return (
-    <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm text-gray-500">{title}</p>
-        {icon ? <div className="text-gray-400">{icon}</div> : null}
+    <div className="offscreen-card">
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">{title}</p>
+        {icon ? <div className="text-gray-600">{icon}</div> : null}
       </div>
-      <div className="text-3xl font-semibold tracking-tight text-gray-900">{value}</div>
-      {hint ? <p className="mt-2 text-sm text-gray-500">{hint}</p> : null}
+      <div className="text-4xl font-black tracking-tighter text-white">{value}</div>
+      {hint ? <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-gray-600">{hint}</p> : null}
     </div>
   );
 }

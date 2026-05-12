@@ -22,68 +22,81 @@ export function StatsPanel({ sessions }: Props) {
   const tags = tagStats(sessions);
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-6">
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard
           title="今日专注"
-          value={`${totalMinutes(today)} 分钟`}
-          icon={<Timer size={20} />}
-          hint={`${today.length} 条记录`}
+          value={`${totalMinutes(today)}`}
+          icon={<Timer size={18} />}
+          hint="MINUTES"
         />
         <StatCard
           title="本周专注"
-          value={`${totalMinutes(week)} 分钟`}
-          icon={<CalendarDays size={20} />}
-          hint="周一至今天"
+          value={`${totalMinutes(week)}`}
+          icon={<CalendarDays size={18} />}
+          hint="MINUTES"
         />
         <StatCard
-          title="连续天数"
-          value={`${currentStreakDays(sessions)} 天`}
-          icon={<Flame size={20} />}
-          hint="有完成记录即计入"
+          title="专注天数"
+          value={`${currentStreakDays(sessions)}`}
+          icon={<Flame size={18} />}
+          hint="DAYS STREAK"
         />
         <StatCard
-          title="累计专注"
-          value={`${totalMinutes(sessions)} 分钟`}
-          icon={<Award size={20} />}
-          hint={`${sessions.length} 条总记录`}
+          title="累计完成"
+          value={`${sessions.filter(s => s.status === 'completed').length}`}
+          icon={<Award size={18} />}
+          hint="SESSIONS"
         />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-gray-100 lg:col-span-2">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">近 7 日趋势</h3>
-            <p className="text-sm text-gray-500">按完成的专注分钟统计</p>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="offscreen-card lg:col-span-2">
+          <div className="mb-8">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Trends</p>
+            <h3 className="mt-1 text-2xl font-black">近 7 日趋势</h3>
           </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={sevenDays}>
-                <XAxis dataKey="label" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} />
-                <Tooltip />
-                <Bar dataKey="minutes" radius={[12, 12, 0, 0]} />
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 800 }}
+                />
+                <YAxis hide />
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                  contentStyle={{ backgroundColor: '#111827', border: 'none', borderRadius: '12px', fontSize: '12px', color: '#fff' }}
+                />
+                <Bar
+                  dataKey="minutes"
+                  fill="#ffffff"
+                  radius={[8, 8, 8, 8]}
+                  barSize={16}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">标签排行</h3>
-            <p className="text-sm text-gray-500">查看时间投入方向</p>
+        <div className="offscreen-card">
+          <div className="mb-8">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Tags</p>
+            <h3 className="mt-1 text-2xl font-black">标签分布</h3>
           </div>
 
           <div className="space-y-3">
             {tags.length === 0 ? (
-              <p className="rounded-2xl bg-gray-50 p-4 text-sm text-gray-500">
-                暂无标签统计。完成一次专注后会显示。
+              <p className="rounded-2xl bg-gray-800/50 p-6 text-sm font-semibold text-gray-600">
+                暂无标签统计
               </p>
             ) : (
               tags.slice(0, 6).map((item) => (
-                <div key={item.tag} className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
-                  <span className="font-medium text-gray-800">{item.tag}</span>
-                  <span className="text-sm text-gray-500">{item.minutes} 分钟</span>
+                <div key={item.tag} className="flex items-center justify-between rounded-[1.25rem] bg-gray-800/50 px-5 py-4 transition hover:bg-gray-800">
+                  <span className="text-sm font-bold text-gray-300">{item.tag}</span>
+                  <span className="text-xs font-black text-white">{item.minutes}m</span>
                 </div>
               ))
             )}
