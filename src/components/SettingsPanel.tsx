@@ -9,7 +9,27 @@ interface Props {
 }
 
 export function SettingsPanel({ sessions, onClear, onRefresh }: Props) {
-  // ... exportJson and demoSync functions remain same
+  function exportJson() {
+    const blob = new Blob([JSON.stringify(sessions, null, 2)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `openfocus-sessions-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function demoSync() {
+    const userId = prompt("输入测试 user_id。正式版应替换为登录用户 ID。");
+    if (!userId) return;
+
+    await pushLocalSessionsToCloud(userId);
+    await pullCloudSessions(userId);
+    await onRefresh();
+    alert("同步完成。");
+  }
 
   return (
     <section className="offscreen-card">

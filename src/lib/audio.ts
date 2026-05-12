@@ -1,4 +1,4 @@
-import { WhiteNoiseTrack } from "./types";
+import { WhiteNoiseTrack } from "../types";
 
 class AudioController {
   private audio: HTMLAudioElement | null = null;
