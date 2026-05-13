@@ -42,8 +42,8 @@ export function WheelPicker({ value, onChange, max, label }: Props) {
             key={item}
             className={`h-[40px] flex items-center justify-center snap-center transition-all ${
               value === item
-                ? "text-3xl font-black text-primary"
-                : "text-xl font-bold text-faint opacity-40"
+                ? "text-4xl font-black text-primary"
+                : "text-2xl font-bold text-faint opacity-30"
             }`}
           >
             {item.toString().padStart(2, "0")}

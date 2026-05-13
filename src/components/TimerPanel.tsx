@@ -36,7 +36,7 @@ export function TimerPanel() {
             <input
               value={t.tag}
               onChange={(e) => t.setTag(e.target.value)}
-              className="bg-transparent text-indigo-400 outline-none w-16 sm:w-20"
+              className="bg-transparent text-[var(--accent-text)] outline-none w-16 sm:w-20"
               placeholder="标签"
             />
             <button
@@ -54,7 +54,7 @@ export function TimerPanel() {
           >
             <span className="shrink-0">专注于</span>
             <span className="text-primary truncate max-w-[120px] sm:max-w-[200px]">{t.title}</span>
-            <span className="text-indigo-400/80 truncate max-w-[80px]">#{t.tag}</span>
+            <span className="text-[var(--accent-text)] truncate max-w-[80px]">#{t.tag}</span>
             <ChevronDown size={14} className="shrink-0" />
           </button>
         )}
@@ -123,7 +123,7 @@ export function TimerPanel() {
           {!t.running ? (
             <div className="flex flex-col items-center">
               {t.mode === "stopwatch" ? (
-                <div className="text-5xl sm:text-7xl font-black tracking-tighter tabular-nums text-primary">
+                <div className="text-6xl sm:text-8xl font-black tracking-tighter tabular-nums text-primary">
                   00:00
                 </div>
               ) : (
@@ -135,7 +135,7 @@ export function TimerPanel() {
             </div>
           ) : (
             <div className="text-center">
-              <div className="text-5xl sm:text-7xl font-black tracking-tighter tabular-nums text-primary">
+              <div className="text-6xl sm:text-8xl font-black tracking-tighter tabular-nums text-primary">
                 {formatMs(t.displayMs)}
               </div>
               <p className="mt-3 sm:mt-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-faint">

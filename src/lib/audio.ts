@@ -68,27 +68,27 @@ const PROCEDURAL: Record<string, ProceduralRecipe> = {
 const REMOTE_URLS: Record<string, string[]> = {
   rain: [
     "/sounds/rain.mp3",
-    "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3",
-    "https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3"
+    "https://cdn.pixabay.com/audio/2022/03/15/audio_c8a3e16f23.mp3",
+    "https://assets.mixkit.co/active_storage/sfx/2515/2515-preview.mp3"
   ],
   forest: [
     "/sounds/forest.mp3",
-    "https://cdn.pixabay.com/download/audio/2021/10/25/audio_d0c1b07d97.mp3",
-    "https://cdn.pixabay.com/download/audio/2022/05/16/audio_f01b83e976.mp3"
+    "https://cdn.pixabay.com/audio/2022/03/15/audio_1808fbf07a.mp3",
+    "https://assets.mixkit.co/active_storage/sfx/1248/1248-preview.mp3"
   ],
   cafe: [
     "/sounds/cafe.mp3",
-    "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c82dd0ab84.mp3",
-    "https://cdn.pixabay.com/download/audio/2022/03/10/audio_e54fe65ca5.mp3"
+    "https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3",
+    "https://assets.mixkit.co/active_storage/sfx/2434/2434-preview.mp3"
   ],
   fire: [
     "/sounds/fire.mp3",
-    "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c42d02b4a8.mp3",
-    "https://cdn.pixabay.com/download/audio/2021/08/09/audio_a29f03b0ec.mp3"
+    "https://cdn.pixabay.com/audio/2022/03/15/audio_2c30b3a14a.mp3",
+    "https://assets.mixkit.co/active_storage/sfx/2520/2520-preview.mp3"
   ]
 };
 
-function tryLoadAudio(url: string, timeoutMs = 4000): Promise<HTMLAudioElement> {
+function tryLoadAudio(url: string, timeoutMs = 2000): Promise<HTMLAudioElement> {
   return new Promise((resolve, reject) => {
     const audio = new Audio();
     audio.crossOrigin = "anonymous";
@@ -192,6 +192,9 @@ class AudioController {
     this.loadingTrackId = track.id;
     this.currentTrackId = track.id;
     this.notify();
+
+    // Warm up AudioContext early so procedural fallback has no delay
+    try { this.ensureCtx(); } catch { /* will retry in fallback */ }
 
     const urls = REMOTE_URLS[track.id] ?? [];
 
