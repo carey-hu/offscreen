@@ -20,7 +20,7 @@ function hasPosition(e: MoodEntry): e is MoodEntry & { position: StarPosition } 
 }
 
 const JAR_BOUNDS: JarBounds = {
-  left: 58, right: 262, bottom: 440, floor: 455, neck: 170,
+  left: 52, right: 268, bottom: 445, floor: 465, neck: 120,
   gravity: 0.5, bounce: 0.3, friction: 0.85
 };
 
@@ -144,25 +144,25 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             </filter>
 
             {/* Galaxy glow behind jar */}
-            <radialGradient id="gCore" cx="50%" cy="55%" r="35%">
+            <radialGradient id="gCore" cx="50%" cy="58%" r="35%">
               <stop offset="0%" stopColor="#fff8d6" stopOpacity="0.55" />
               <stop offset="35%" stopColor="#ffe08a" stopOpacity="0.25" />
               <stop offset="100%" stopColor="#e89840" stopOpacity="0" />
             </radialGradient>
-            <radialGradient id="gMid" cx="50%" cy="55%" r="50%">
+            <radialGradient id="gMid" cx="50%" cy="58%" r="50%">
               <stop offset="0%" stopColor="#fff0b0" stopOpacity="0.3" />
               <stop offset="55%" stopColor="#e0a060" stopOpacity="0.08" />
               <stop offset="100%" stopColor="#7060b0" stopOpacity="0" />
             </radialGradient>
 
             {/* Inner bottom glow */}
-            <radialGradient id="innerGlow" cx="50%" cy="93%" r="35%">
+            <radialGradient id="innerGlow" cx="50%" cy="92%" r="38%">
               <stop offset="0%" stopColor="#fff4c0" stopOpacity="0.45" />
               <stop offset="55%" stopColor="#e8a050" stopOpacity="0.08" />
               <stop offset="100%" stopColor="#c07030" stopOpacity="0" />
             </radialGradient>
 
-            {/* Glass fill — very subtle */}
+            {/* Glass fill */}
             <linearGradient id="glass" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="rgba(255,255,255,0.12)" />
               <stop offset="30%" stopColor="rgba(255,255,255,0.01)" />
@@ -187,26 +187,30 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             {/* Jar interior clip */}
             <clipPath id="jarInterior">
               <path d="
-                M 147 40
-                C 142 30, 132 24, 122 24
-                L 122 165
-                C 80 180, 48 215, 42 260
-                C 38 305, 40 355, 45 400
-                C 52 445, 88 466, 160 466
-                C 232 466, 268 445, 275 400
-                C 280 355, 282 305, 278 260
-                C 272 215, 240 180, 198 165
-                L 198 24
-                C 188 24, 178 30, 173 40
+                M 148 30
+                C 143 20, 132 14, 118 14
+                L 98 14
+                C 82 14, 72 24, 72 38
+                L 72 110
+                C 50 160, 38 220, 35 280
+                C 32 345, 38 405, 52 445
+                C 68 470, 108 482, 160 482
+                C 212 482, 252 470, 268 445
+                C 282 405, 288 345, 285 280
+                C 282 220, 270 160, 248 110
+                L 248 38
+                C 248 24, 238 14, 222 14
+                L 202 14
+                C 188 14, 177 20, 172 30
               " />
             </clipPath>
           </defs>
 
           {/* Galaxy glow behind jar */}
           <g style={{ animation: `galaxyBreathing ${4 + total * 0.25}s ease-in-out infinite` }}>
-            <ellipse cx="160" cy="270" rx={glow.mid.rx + 15} ry={glow.mid.ry + 12}
+            <ellipse cx="160" cy="300" rx={glow.mid.rx + 15} ry={glow.mid.ry + 12}
               fill="url(#gMid)" opacity={glow.mid.opacity} />
-            <ellipse cx="160" cy="270" rx={glow.core.rx + 8} ry={glow.core.ry + 6}
+            <ellipse cx="160" cy="300" rx={glow.core.rx + 8} ry={glow.core.ry + 6}
               fill="url(#gCore)" opacity={glow.core.opacity} />
           </g>
 
@@ -239,56 +243,60 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             {/* Empty state */}
             {total === 0 && (
               <g opacity="0.15" style={{ animation: "galaxyBreathing 3.5s ease-in-out infinite" }}>
-                <path d={makeRoundedStarPath(160, 280, 26, 0)} fill="#fff8d0" filter="url(#sgSoft)" />
+                <path d={makeRoundedStarPath(160, 300, 26, 0)} fill="#fff8d0" filter="url(#sgSoft)" />
               </g>
             )}
           </g>
 
           {/* Inner bottom glow */}
-          <ellipse cx="160" cy="458" rx="80" ry="22"
+          <ellipse cx="160" cy="470" rx="100" ry="28"
             fill="url(#innerGlow)" opacity={glow.inner.opacity}
             style={{ transition: "opacity 0.8s ease" }}
           />
 
-          {/* ── Drift bottle body ── */}
+          {/* ── Wide-mouth glass jar body ── */}
           <path
             d="
-              M 147 40
-              C 142 30, 132 24, 122 24
-              L 122 165
-              C 80 180, 48 215, 42 260
-              C 38 305, 40 355, 45 400
-              C 52 445, 88 466, 160 466
-              C 232 466, 268 445, 275 400
-              C 280 355, 282 305, 278 260
-              C 272 215, 240 180, 198 165
-              L 198 24
-              C 188 24, 178 30, 173 40
+              M 148 30
+              C 143 20, 132 14, 118 14
+              L 98 14
+              C 82 14, 72 24, 72 38
+              L 72 110
+              C 50 160, 38 220, 35 280
+              C 32 345, 38 405, 52 445
+              C 68 470, 108 482, 160 482
+              C 212 482, 252 470, 268 445
+              C 282 405, 288 345, 285 280
+              C 282 220, 270 160, 248 110
+              L 248 38
+              C 248 24, 238 14, 222 14
+              L 202 14
+              C 188 14, 177 20, 172 30
             "
             fill="url(#glass)"
             stroke="var(--jar-stroke)"
             strokeWidth="1.5"
           />
 
-          {/* Glass left highlight — follows bottle body contour */}
+          {/* Glass left highlight */}
           <path
-            d="M 52 175 C 46 220, 45 290, 50 380 L 66 375 C 60 290, 60 220, 66 180 Z"
+            d="M 48 130 C 40 190, 40 280, 46 400 L 62 395 C 56 280, 56 190, 62 138 Z"
             fill="url(#hlL)"
           />
 
           {/* Glass right edge light */}
           <path
-            d="M 268 175 C 274 220, 275 290, 270 380 L 254 375 C 260 290, 260 220, 254 180 Z"
+            d="M 272 130 C 280 190, 280 280, 274 400 L 258 395 C 264 280, 264 190, 258 138 Z"
             fill="url(#hlR)"
           />
 
           {/* Neck rim */}
-          <ellipse cx="160" cy="40" rx="38" ry="5" fill="none" stroke="var(--jar-stroke-neck)" strokeWidth="1" />
+          <ellipse cx="160" cy="30" rx="55" ry="6" fill="none" stroke="var(--jar-stroke-neck)" strokeWidth="1" />
 
           {/* Sparkle particles */}
           {Array.from({ length: 16 }, (_, i) => {
-            const sx = 40 + ((i * 71 + 37) % 240);
-            const sy = 180 + ((i * 63 + 29) % 280);
+            const sx = 38 + ((i * 71 + 37) % 248);
+            const sy = 120 + ((i * 63 + 29) % 355);
             return (
               <circle key={i} cx={sx} cy={sy} r={1 + (i % 5) * 0.5}
                 fill="#fff8d0" opacity="0"
