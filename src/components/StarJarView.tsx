@@ -316,7 +316,7 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
-            placeholder={total >= 30 ? "星星已满，继续添加将替换最早的一颗" : "今天有什么开心的事？"}
+            placeholder="今天有什么开心的事？"
             className="w-full rounded-2xl bg-card/80 backdrop-blur px-4 py-3 text-sm font-bold text-primary outline-none ring-1 ring-subtle focus:ring-2 focus:ring-amber-400/40 placeholder:text-faint/60 transition-all duration-300"
           />
         </div>
