@@ -26,6 +26,14 @@ export interface WhiteNoiseTrack {
   url: string;
 }
 
+export interface Task {
+  id: string;
+  title: string;
+  icon: string;
+  description: string;
+  tag: string;
+}
+
 export interface UserSettings {
   defaultMode: FocusMode;
   pomodoroMinutes: number;

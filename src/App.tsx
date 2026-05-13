@@ -1,55 +1,90 @@
-import { Github, TimerReset } from "lucide-react";
+import { ChevronLeft, ChevronRight, LayoutGrid, Plus, Calendar, Smartphone } from "lucide-react";
 import { TimerPanel } from "./components/TimerPanel";
 import { StatsPanel } from "./components/StatsPanel";
-import { SessionList } from "./components/SessionList";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { TaskSidebar } from "./components/TaskSidebar";
 import { useSessions } from "./hooks/useSessions";
+import { useState } from "react";
 
 export default function App() {
-  const { sessions, loading, upsert, remove, clear, refresh } = useSessions();
+  const { sessions, loading, upsert, clear, refresh } = useSessions();
+  const [activeTab, setActiveTab] = useState<"stats" | "focus" | "settings">("focus");
 
   return (
-    <main className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
-      <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-10">
+    <main className="min-h-screen bg-[#1a1a22] text-white selection:bg-indigo-500/30">
+      {/* Top Navigation */}
+      <header className="flex items-center justify-between px-8 py-6">
         <div className="flex items-center gap-4">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-black shadow-2xl">
-            <TimerReset size={26} strokeWidth={2.5} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">OffScreen</h1>
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">Less Screen Time</p>
-          </div>
+          <button className="grid h-10 w-10 place-items-center rounded-xl bg-[#22222b] text-gray-400 hover:text-white transition shadow-lg">
+            <LayoutGrid size={20} />
+          </button>
+          <button className="grid h-10 w-10 place-items-center rounded-xl bg-[#22222b] text-gray-400 hover:text-white transition shadow-lg">
+            <Plus size={20} />
+          </button>
         </div>
 
-        <a
-          href="https://github.com/"
-          target="_blank"
-          rel="noreferrer"
-          className="hidden items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-100 transition hover:bg-gray-100 sm:flex"
-        >
-          <Github size={18} />
-          GitHub
-        </a>
+        <nav className="flex items-center bg-[#22222b] p-1 rounded-2xl shadow-xl">
+          <button
+            onClick={() => setActiveTab("stats")}
+            className={`px-6 py-2 text-sm font-bold rounded-[0.85rem] transition ${
+              activeTab === "stats" ? "bg-[#3d3d4d] text-white" : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            屏幕使用时间
+          </button>
+          <button
+            onClick={() => setActiveTab("focus")}
+            className={`px-6 py-2 text-sm font-bold rounded-[0.85rem] transition ${
+              activeTab === "focus" ? "bg-[#3d3d4d] text-white" : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            专注
+          </button>
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`px-6 py-2 text-sm font-bold rounded-[0.85rem] transition ${
+              activeTab === "settings" ? "bg-[#3d3d4d] text-white" : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            设置
+          </button>
+        </nav>
+
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 bg-[#22222b] px-4 py-2 rounded-xl text-sm font-bold text-gray-300 shadow-lg">
+            <ChevronLeft size={16} className="text-gray-600 cursor-pointer" />
+            <span>5月12日 周二</span>
+            <ChevronRight size={16} className="text-gray-600 cursor-pointer" />
+          </div>
+          <button className="grid h-10 w-10 place-items-center rounded-xl bg-[#22222b] text-gray-400 hover:text-white transition shadow-lg">
+            <Calendar size={20} />
+          </button>
+        </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-6 px-5 pb-12 lg:grid-cols-[420px_1fr]">
-        <div className="space-y-6">
-          <TimerPanel onSave={upsert} />
-          <SettingsPanel sessions={sessions} onClear={clear} onRefresh={refresh} />
-        </div>
-
-        <div className="space-y-8">
-          {loading ? (
-            <div className="offscreen-card text-center text-gray-500">
-              正在加载本地数据...
-            </div>
-          ) : (
+      {/* Main Content Area */}
+      <div className="mx-auto grid max-w-[1400px] gap-8 px-8 pb-12 lg:grid-cols-[1fr_400px]">
+        {/* Left Side: Timer & Stats Summary */}
+        <div className="space-y-12">
+          {activeTab === "focus" ? (
             <>
-              <StatsPanel sessions={sessions} />
-              <SessionList sessions={sessions} onRemove={remove} />
+              <TimerPanel onSave={upsert} />
+              <StatsPanel sessions={sessions} summaryOnly />
             </>
+          ) : activeTab === "settings" ? (
+            <SettingsPanel sessions={sessions} onClear={clear} onRefresh={refresh} />
+          ) : (
+             <div className="offscreen-card h-[600px] flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest">
+               Screen Time Analysis Placeholder
+             </div>
           )}
         </div>
+
+        {/* Right Side: Task Sidebar */}
+        <TaskSidebar onTaskStart={(task) => {
+          // Task start logic handled in TimerPanel by setting title/tag
+          console.log("Starting task:", task.title);
+        }} />
       </div>
     </main>
   );

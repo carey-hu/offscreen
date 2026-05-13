@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CirclePause, CirclePlay, RotateCcw, Square, Smartphone } from "lucide-react";
+import { CirclePlay, Square, RotateCcw, Smartphone, ChevronDown } from "lucide-react";
 import { FocusMode, FocusSession } from "../types";
 import { getDeviceId } from "../lib/device";
 import { AudioPicker } from "./AudioPicker";
+import { WheelPicker } from "./WheelPicker";
 
-const modeOptions: Array<{ label: string; value: FocusMode; minutes: number; icon?: any }> = [
+const modeOptions: Array<{ label: string; value: FocusMode; minutes: number }> = [
   { label: "番茄钟", value: "pomodoro", minutes: 25 },
-  { label: "长专注", value: "long", minutes: 50 },
-  { label: "翻转专注", value: "flip", minutes: 25 },
   { label: "倒计时", value: "countdown", minutes: 30 },
   { label: "正计时", value: "stopwatch", minutes: 0 }
 ];
@@ -17,14 +16,14 @@ interface Props {
 }
 
 export function TimerPanel({ onSave }: Props) {
-  const [mode, setMode] = useState<FocusMode>("pomodoro");
+  const [mode, setMode] = useState<FocusMode>("countdown");
   const [title, setTitle] = useState("深度专注");
   const [tag, setTag] = useState("工作");
-  const [customMinutes, setCustomMinutes] = useState(25);
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(25);
   const [running, setRunning] = useState(false);
   const [paused, setPaused] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [pauseStartedAt, setPauseStartedAt] = useState<number | null>(null);
   const [pausedMs, setPausedMs] = useState(0);
   const [now, setNow] = useState(Date.now());
   const [accumulatedHiddenMs, setAccumulatedHiddenMs] = useState(0);
@@ -32,131 +31,53 @@ export function TimerPanel({ onSave }: Props) {
   const [isInterrupted, setIsInterrupted] = useState(false);
   const sessionIdRef = useRef<string | null>(null);
 
-  // Flip mode logic
-  useEffect(() => {
-    if (mode !== "flip" || !running || paused) {
-      setIsInterrupted(false);
-      return;
-    }
-
-    const handleVisibilityChange = () => {
-      const timestamp = Date.now();
-      if (document.visibilityState === "hidden") {
-        setLastHiddenAt(timestamp);
-        setIsInterrupted(false);
-      } else {
-        if (lastHiddenAt) {
-          setAccumulatedHiddenMs((prev) => prev + (timestamp - lastHiddenAt));
-        }
-        setLastHiddenAt(null);
-        setIsInterrupted(true);
-      }
-    };
-
-    // Initialize state
-    if (document.visibilityState === "hidden") {
-      setLastHiddenAt(Date.now());
-      setIsInterrupted(false);
-    } else {
-      setIsInterrupted(true);
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      setIsInterrupted(false);
-    };
-  }, [mode, running, paused]);
-
   const plannedMinutes = useMemo(() => {
     if (mode === "stopwatch") return 0;
-    if (mode === "countdown") return customMinutes;
-    return modeOptions.find((item) => item.value === mode)?.minutes ?? 25;
-  }, [customMinutes, mode]);
+    return hours * 60 + minutes;
+  }, [hours, minutes, mode]);
+
+  const targetMs = plannedMinutes * 60 * 1000;
 
   const elapsedMs = useMemo(() => {
     if (!startedAt) return 0;
-
     if (mode === "flip") {
       const currentHiddenExtra = (lastHiddenAt && !paused) ? now - lastHiddenAt : 0;
       return Math.max(0, accumulatedHiddenMs + currentHiddenExtra);
     }
-
-    const pauseExtra = paused && pauseStartedAt ? now - pauseStartedAt : 0;
-    const baseElapsed = now - startedAt - pausedMs - pauseExtra;
+    const baseElapsed = now - startedAt - pausedMs;
     return Math.max(0, baseElapsed);
-  }, [now, paused, pauseStartedAt, pausedMs, startedAt, mode, accumulatedHiddenMs, lastHiddenAt]);
+  }, [now, paused, startedAt, mode, accumulatedHiddenMs, lastHiddenAt, pausedMs]);
 
-  const targetMs = plannedMinutes * 60 * 1000;
-
-  const displayMs =
-    mode === "stopwatch" ? elapsedMs : Math.max(0, targetMs - elapsedMs);
-
-  const progress =
-    mode === "stopwatch" || targetMs <= 0
-      ? 0
-      : Math.min(100, (elapsedMs / targetMs) * 100);
-
-  const timeText = formatMs(displayMs);
+  const displayMs = mode === "stopwatch" ? elapsedMs : Math.max(0, targetMs - elapsedMs);
+  const progress = (mode === "stopwatch" || targetMs <= 0) ? 0 : Math.min(100, (elapsedMs / targetMs) * 100);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(Date.now());
-    }, 500);
-
+    const timer = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
     if (!running || paused || mode === "stopwatch") return;
-    if (targetMs > 0 && elapsedMs >= targetMs) {
-      finish("completed");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (targetMs > 0 && elapsedMs >= targetMs) finish("completed");
   }, [elapsedMs, mode, paused, running, targetMs]);
 
   async function start() {
     sessionIdRef.current = crypto.randomUUID();
     setStartedAt(Date.now());
     setPausedMs(0);
-    setPauseStartedAt(null);
-    setPaused(false);
     setRunning(true);
     setAccumulatedHiddenMs(0);
-    setLastHiddenAt(document.visibilityState === "hidden" ? Date.now() : null);
-
-    if ("Notification" in window && Notification.permission === "default") {
-      await Notification.requestPermission();
-    }
-  }
-
-  function pauseOrResume() {
-    if (!running) return;
-
-    if (paused) {
-      if (pauseStartedAt) {
-        setPausedMs((v) => v + Date.now() - pauseStartedAt);
-      }
-      setPauseStartedAt(null);
-      setPaused(false);
-    } else {
-      setPauseStartedAt(Date.now());
-      setPaused(true);
-    }
   }
 
   async function finish(status: "completed" | "abandoned") {
     if (!startedAt || !sessionIdRef.current) return;
-
     const finishedAt = Date.now();
     const actualMinutes = Math.max(1, Math.round(elapsedMs / 60000));
-    const isoNow = new Date().toISOString();
-
-    const session: FocusSession = {
+    await onSave({
       id: sessionIdRef.current,
       deviceId: getDeviceId(),
-      title: title.trim() || "未命名专注",
-      tag: tag.trim() || "默认",
+      title,
+      tag,
       mode,
       startTime: new Date(startedAt).toISOString(),
       endTime: new Date(finishedAt).toISOString(),
@@ -164,17 +85,8 @@ export function TimerPanel({ onSave }: Props) {
       actualMinutes,
       status,
       createdAt: new Date(startedAt).toISOString(),
-      updatedAt: isoNow
-    };
-
-    await onSave(session);
-
-    if (status === "completed" && "Notification" in window && Notification.permission === "granted") {
-      new Notification("OpenFocus", {
-        body: `已完成：${session.title}，本次专注 ${session.actualMinutes} 分钟。`
-      });
-    }
-
+      updatedAt: new Date().toISOString()
+    });
     reset();
   }
 
@@ -182,143 +94,93 @@ export function TimerPanel({ onSave }: Props) {
     setRunning(false);
     setPaused(false);
     setStartedAt(null);
-    setPauseStartedAt(null);
     setPausedMs(0);
     setAccumulatedHiddenMs(0);
     setLastHiddenAt(null);
     setIsInterrupted(false);
-    sessionIdRef.current = null;
   }
 
   return (
-    <section className="relative offscreen-card text-white overflow-hidden">
-      {/* Interruption Overlay for Flip Mode */}
-      {mode === "flip" && running && !paused && isInterrupted && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md p-8 text-center animate-in fade-in duration-500">
-          <Smartphone size={64} className="mb-6 text-white animate-bounce" />
-          <h3 className="text-2xl font-black mb-4">专注已中断</h3>
-          <p className="text-gray-400 font-bold uppercase tracking-widest text-xs leading-relaxed">
-            翻转模式要求保持手机扣放<br />请切回其他标签或遮盖屏幕以继续
-          </p>
-        </div>
-      )}
-
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Focus Session</p>
-          <h2 className="mt-1 text-2xl font-bold">开始一次高质量专注</h2>
-        </div>
-        {mode === "flip" && (
-          <div className="flex items-center gap-2 rounded-full bg-orange-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-500 ring-1 ring-orange-500/30">
-            <Smartphone size={12} />
-            Flip Mode
-          </div>
-        )}
+    <div className="flex flex-col items-center">
+      {/* Mode Selectors */}
+      <div className="flex items-center gap-2 mb-8">
+        <button className="flex items-center gap-2 bg-[#22222b] px-4 py-2 rounded-xl text-xs font-bold text-gray-400">
+          <span>专注于</span>
+          <span className="text-white">🐟 full time 数量</span>
+          <ChevronDown size={14} />
+        </button>
       </div>
 
-      <div className="mb-8 grid grid-cols-3 gap-2 sm:grid-cols-5">
-        {modeOptions.map((item) => (
+      <div className="flex gap-4 mb-10">
+        {modeOptions.map((opt) => (
           <button
-            key={item.value}
+            key={opt.value}
+            onClick={() => setMode(opt.value)}
             disabled={running}
-            onClick={() => {
-              setMode(item.value);
-              if (item.value !== "countdown") setCustomMinutes(item.minutes || 25);
-            }}
-            className={`flex flex-col items-center gap-2 rounded-2xl py-3 transition-all ${
-              mode === item.value
-                ? "bg-white text-black scale-105 shadow-xl"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
-            } disabled:cursor-not-allowed disabled:opacity-50`}
+            className={`pill-button ${mode === opt.value ? "pill-button-active" : ""}`}
           >
-            <span className="text-[10px] font-bold uppercase tracking-tighter">{item.label}</span>
+            {opt.label}
           </button>
         ))}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <input
-          disabled={running}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="rounded-[1.25rem] border border-white/5 bg-gray-800 px-5 py-4 text-sm font-medium outline-none transition focus:ring-2 focus:ring-white/10 disabled:opacity-50 sm:col-span-2"
-          placeholder="正在做什么？"
-        />
-        <input
-          disabled={running}
-          value={tag}
-          onChange={(e) => setTag(e.target.value)}
-          className="rounded-[1.25rem] border border-white/5 bg-gray-800 px-5 py-4 text-sm font-medium outline-none transition focus:ring-2 focus:ring-white/10 disabled:opacity-50"
-          placeholder="标签"
-        />
-      </div>
-
-      {mode === "countdown" ? (
-        <div className="mt-4 px-2">
-          <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500">
-            <span>Duration</span>
-            <span>{customMinutes} min</span>
-          </div>
-          <input
-            disabled={running}
-            type="range"
-            min={5}
-            max={180}
-            step={5}
-            value={customMinutes}
-            onChange={(e) => setCustomMinutes(Number(e.target.value))}
-            className="mt-3 w-full accent-white"
-          />
-        </div>
-      ) : null}
-
-      <div className="my-12 flex flex-col items-center">
+      {/* Main Timer Display */}
+      <div className="relative mb-12">
         <div
-          className="grid h-72 w-72 place-items-center rounded-full"
+          className="grid h-[380px] w-[380px] place-items-center rounded-full border-[12px] border-[#22222b]"
           style={{
-            background:
-              mode === "stopwatch"
-                ? "radial-gradient(circle, rgba(255,255,255,0.03) 64%, rgba(255,255,255,0.08) 65%)"
-                : `conic-gradient(white ${progress}%, rgba(255,255,255,0.05) ${progress}%)`
+            background: `conic-gradient(#8a8aff ${progress}%, transparent ${progress}%)`,
+            maskImage: 'radial-gradient(transparent 64%, black 65%)',
+            WebkitMaskImage: 'radial-gradient(transparent 64%, black 65%)'
           }}
-        >
-          <div className="grid h-64 w-64 place-items-center rounded-full bg-black shadow-inner">
+        />
+        {/* Progress Ring Overlay (Secondary) */}
+        <div className="absolute inset-0 grid h-[380px] w-[380px] place-items-center rounded-full border-[12px] border-[#22222b] opacity-20" />
+
+        <div className="absolute inset-0 flex items-center justify-center">
+          {!running ? (
+            <div className="flex items-center gap-4">
+              <WheelPicker value={hours} onChange={setHours} max={23} label="小时" />
+              <WheelPicker value={minutes} onChange={setMinutes} max={59} label="分钟" />
+            </div>
+          ) : (
             <div className="text-center">
-              <div className="text-6xl font-black tabular-nums tracking-tighter">{timeText}</div>
-              <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
-                {running ? (paused ? "Paused" : "Focusing") : "Ready"}
+              <div className="text-7xl font-black tracking-tighter tabular-nums">
+                {formatMs(displayMs)}
+              </div>
+              <p className="mt-4 text-xs font-black uppercase tracking-[0.3em] text-gray-600">
+                {paused ? "Paused" : "Focusing"}
               </p>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-3">
+      {/* Action Buttons */}
+      <div className="w-full max-w-xs space-y-4">
         {!running ? (
-          <button onClick={start} className="btn-primary w-full sm:w-auto">
-            <CirclePlay size={20} />
+          <button onClick={start} className="btn-primary w-full text-indigo-400">
             开始专注
           </button>
         ) : (
-          <>
-            <button onClick={pauseOrResume} className="btn-secondary">
-              <CirclePause size={20} />
-              {paused ? "继续" : "暂停"}
-            </button>
-            <button onClick={() => finish("completed")} className="btn-primary">
-              <Square size={18} />
-              完成
-            </button>
-            <button onClick={() => finish("abandoned")} className="btn-danger">
-              <RotateCcw size={18} />
-              放弃
-            </button>
-          </>
+          <div className="flex gap-3">
+             <button onClick={() => setPaused(!paused)} className="btn-secondary flex-1">
+               {paused ? "继续" : "暂停"}
+             </button>
+             <button onClick={() => finish("completed")} className="btn-primary flex-1 !bg-white !text-black">
+               完成
+             </button>
+             <button onClick={() => finish("abandoned")} className="btn-danger p-4">
+               <RotateCcw size={20} />
+             </button>
+          </div>
         )}
       </div>
 
-      <AudioPicker />
-    </section>
+      <div className="mt-12 w-full">
+         <AudioPicker />
+      </div>
+    </div>
   );
 }
 
@@ -327,14 +189,10 @@ function formatMs(ms: number) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-  }
-
+  if (hours > 0) return `${hours}:${pad(minutes)}:${pad(seconds)}`;
   return `${pad(minutes)}:${pad(seconds)}`;
 }
 
-function pad(value: number) {
-  return value.toString().padStart(2, "0");
+function pad(v: number) {
+  return v.toString().padStart(2, "0");
 }

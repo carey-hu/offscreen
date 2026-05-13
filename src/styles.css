@@ -16,22 +16,39 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center gap-2 rounded-[1.25rem] bg-white px-8 py-4 text-sm font-bold text-black shadow-lg transition-transform active:scale-95 hover:bg-gray-100;
+    @apply inline-flex items-center gap-2 rounded-full bg-[#3d3d4d] px-10 py-4 text-base font-bold text-[#8a8aff] shadow-lg transition-transform active:scale-95 hover:bg-[#4a4a5a];
   }
 
   .btn-secondary {
-    @apply inline-flex items-center gap-2 rounded-[1.25rem] bg-gray-900 px-8 py-4 text-sm font-bold text-white transition-transform active:scale-95 hover:bg-gray-800;
+    @apply inline-flex items-center gap-2 rounded-full bg-[#2a2a35] px-8 py-4 text-sm font-bold text-gray-400 transition-transform active:scale-95 hover:bg-[#353545];
   }
 
   .btn-danger {
-    @apply inline-flex items-center gap-2 rounded-[1.25rem] bg-red-600 px-8 py-4 text-sm font-bold text-white transition-transform active:scale-95 hover:bg-red-700;
+    @apply inline-flex items-center gap-2 rounded-full bg-red-950/40 px-8 py-4 text-sm font-bold text-red-500 transition-transform active:scale-95 hover:bg-red-900/50;
   }
 
   .settings-btn {
-    @apply flex items-center gap-3 rounded-[1.25rem] bg-gray-900 px-5 py-4 text-left text-sm font-semibold text-gray-300 transition hover:bg-gray-800 hover:text-white;
+    @apply flex items-center gap-3 rounded-[1.5rem] bg-[#22222b] px-5 py-4 text-left text-sm font-semibold text-gray-400 transition hover:bg-[#2a2a35] hover:text-white;
   }
 
   .offscreen-card {
-    @apply rounded-[2.5rem] bg-gray-900 p-6 shadow-2xl ring-1 ring-white/5;
+    @apply rounded-[2rem] bg-[#22222b] p-6 shadow-xl;
   }
+
+  .pill-button {
+    @apply rounded-full bg-[#2a2a35] px-4 py-1.5 text-xs font-bold text-gray-500 transition hover:bg-[#353545] hover:text-gray-300;
+  }
+
+  .pill-button-active {
+    @apply bg-[#3d3d4d] text-gray-200;
+  }
+}
+
+/* Custom Scrollbar for Wheel Picker */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
