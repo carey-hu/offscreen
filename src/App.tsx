@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, LayoutGrid, Plus, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { useCallback, useState } from "react";
@@ -7,7 +7,6 @@ import { StatsPanel } from "./components/StatsPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { TaskSidebar } from "./components/TaskSidebar";
 import { ScreenTimePanel } from "./components/ScreenTimePanel";
-import { SessionList } from "./components/SessionList";
 import { StarJarPage } from "./components/StarJarPage";
 import { CalendarPopover } from "./components/CalendarPopover";
 import { DayDetailModal } from "./components/DayDetailModal";
@@ -28,7 +27,6 @@ export default function App() {
   const { entries: moodEntries, upsert: upsertMood, remove: removeMood } = useMoodEntries();
   const [activeTab, setActiveTab] = useState<"stats" | "focus" | "settings" | "starjar">("focus");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [historyView, setHistoryView] = useState(false);
   const [createTaskSignal, setCreateTaskSignal] = useState(0);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [detailDate, setDetailDate] = useState<Date | null>(null);
@@ -72,21 +70,6 @@ export default function App() {
             <button
               onClick={() => {
                 setActiveTab("focus");
-                setHistoryView((v) => !v);
-              }}
-              className={`grid h-10 w-10 place-items-center rounded-xl transition shadow-lg ${
-                historyView
-                  ? "bg-indigo-500/20 text-indigo-400"
-                  : "bg-card text-muted hover:text-primary"
-              }`}
-              title="切换历史视图"
-            >
-              <LayoutGrid size={20} />
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("focus");
-                setHistoryView(false);
                 setCreateTaskSignal((s) => s + 1);
               }}
               className="grid h-10 w-10 place-items-center rounded-xl bg-card text-muted hover:text-primary transition shadow-lg"
@@ -198,9 +181,6 @@ export default function App() {
           <div className="mx-auto grid max-w-[1400px] gap-6 sm:gap-8 px-4 sm:px-8 pb-12 lg:grid-cols-[1fr_400px]">
             <div className="space-y-8 sm:space-y-12">
               {activeTab === "focus" ? (
-                historyView ? (
-                  <SessionList sessions={sessions} onRemove={removeSession} />
-                ) : (
                   <>
                     <TimerPanel />
                     <StatsPanel
@@ -213,7 +193,6 @@ export default function App() {
                       onOpenStarJar={() => setActiveTab("starjar")}
                     />
                   </>
-                )
               ) : activeTab === "settings" ? (
                 <SettingsPanel
                   sessions={sessions}
