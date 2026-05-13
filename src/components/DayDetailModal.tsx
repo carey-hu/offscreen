@@ -42,7 +42,6 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
   const daySessions = sessions.filter((s) => isSameDay(parseISO(s.startTime), date));
   const completed = daySessions.filter((s) => s.status === "completed");
 
-  // Group sessions by taskId (or title+tag fallback for legacy)
   const groups = new Map<string, Group>();
   daySessions.forEach((s) => {
     const key = s.taskId ?? `__${s.title}__${s.tag}`;
@@ -65,13 +64,11 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
     }
   });
 
-  // Attach notes by taskId
   notes.forEach((n) => {
     const group = Array.from(groups.values()).find((g) => g.taskId === n.taskId);
     if (group) {
       group.notes.push(n);
     } else {
-      // Note exists for a task that had no sessions today — still show
       const task = tasks.find((t) => t.id === n.taskId);
       if (task) {
         groups.set(`note-only-${task.id}`, {
@@ -103,17 +100,17 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl rounded-[2rem] bg-[#22222b] p-6 sm:p-8 shadow-2xl max-h-[90vh] flex flex-col"
+        className="w-full max-w-2xl rounded-[2rem] bg-card p-6 sm:p-8 shadow-2xl max-h-[90vh] flex flex-col"
       >
         <div className="mb-6 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
               Day journal
             </p>
-            <h3 className="mt-0.5 text-xl sm:text-2xl font-black text-white">
+            <h3 className="mt-0.5 text-xl sm:text-2xl font-black text-primary">
               {format(date, "yyyy 年 M月d日 EEEE", { locale: zhCN })}
             </h3>
-            <p className="mt-1 text-xs font-bold text-indigo-300">
+            <p className="mt-1 text-xs font-bold text-indigo-400">
               <Clock size={11} className="inline -mt-0.5 mr-1" />
               专注 {totalHours > 0 ? `${totalHours} 小时 ` : ""}
               {totalMins} 分钟 · 共 {completed.length} 次会话
@@ -121,14 +118,14 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
           </div>
           <button
             onClick={onClose}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[#2a2a35] text-gray-400 hover:text-white shrink-0"
+            className="grid h-9 w-9 place-items-center rounded-full bg-surface text-muted hover:text-primary shrink-0"
           >
             <X size={18} />
           </button>
         </div>
 
         {groupList.length === 0 ? (
-          <div className="flex-1 grid place-items-center text-xs font-bold uppercase tracking-widest text-gray-600">
+          <div className="flex-1 grid place-items-center text-xs font-bold uppercase tracking-widest text-faint">
             这一天没有专注记录或备注
           </div>
         ) : (
@@ -138,7 +135,7 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
               return (
                 <div
                   key={g.key}
-                  className="relative rounded-2xl bg-[#1a1a22] p-4 sm:p-5 overflow-hidden"
+                  className="relative rounded-2xl bg-base p-4 sm:p-5 overflow-hidden"
                 >
                   <span
                     className="absolute left-0 top-0 bottom-0 w-1"
@@ -153,7 +150,7 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h4 className="text-base font-black text-white truncate">{g.title}</h4>
+                        <h4 className="text-base font-black text-primary truncate">{g.title}</h4>
                         <span
                           className="rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase"
                           style={{ background: `${accent}33`, color: accent }}
@@ -161,7 +158,7 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
                           {g.tag}
                         </span>
                       </div>
-                      <p className="mt-1 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                      <p className="mt-1 text-[11px] font-bold text-muted uppercase tracking-wider">
                         {g.totalMinutes > 0
                           ? `${g.totalMinutes} 分钟 · ${g.sessionCount} 次`
                           : g.notes.length > 0
@@ -172,20 +169,18 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
                   </div>
 
                   {g.notes.length > 0 ? (
-                    <div className="space-y-2 mt-3 pl-2 border-l-2 border-white/5">
+                    <div className="space-y-2 mt-3 pl-2 border-l-2 border-subtle">
                       {g.notes.map((n) => (
                         <p
                           key={n.id}
-                          className="text-sm leading-relaxed text-gray-200 whitespace-pre-wrap break-words pl-3"
+                          className="text-sm leading-relaxed text-secondary whitespace-pre-wrap break-words pl-3"
                         >
                           {n.content}
                         </p>
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-2 pl-2 text-xs text-gray-600 italic">
-                      暂无备注
-                    </p>
+                    <p className="mt-2 pl-2 text-xs text-faint italic">暂无备注</p>
                   )}
                 </div>
               );

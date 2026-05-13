@@ -13,7 +13,7 @@ export function WheelPicker({ value, onChange, max, label }: Props) {
 
   useEffect(() => {
     if (scrollRef.current) {
-      const itemHeight = 40; // Height of each item
+      const itemHeight = 40;
       scrollRef.current.scrollTop = value * itemHeight;
     }
   }, []);
@@ -36,20 +36,24 @@ export function WheelPicker({ value, onChange, max, label }: Props) {
         className="h-[120px] overflow-y-auto no-scrollbar snap-y snap-mandatory px-4"
         style={{ scrollbarWidth: "none" }}
       >
-        <div className="h-[40px]" /> {/* Top Padding */}
+        <div className="h-[40px]" />
         {items.map((item) => (
           <div
             key={item}
             className={`h-[40px] flex items-center justify-center snap-center transition-all ${
-              value === item ? "text-3xl font-black text-white" : "text-xl font-bold text-gray-700 opacity-40"
+              value === item
+                ? "text-3xl font-black text-primary"
+                : "text-xl font-bold text-faint opacity-40"
             }`}
           >
             {item.toString().padStart(2, "0")}
           </div>
         ))}
-        <div className="h-[40px]" /> {/* Bottom Padding */}
+        <div className="h-[40px]" />
       </div>
-      <span className="mt-2 text-[10px] font-black uppercase tracking-widest text-gray-600">{label}</span>
+      <span className="mt-2 text-[10px] font-black uppercase tracking-widest text-faint">
+        {label}
+      </span>
     </div>
   );
 }

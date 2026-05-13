@@ -63,20 +63,20 @@ export function SettingsPanel({
     <div className="space-y-6">
       <section className="offscreen-card">
         <div className="mb-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Preferences</p>
-          <h3 className="mt-1 text-2xl font-black text-white">专注偏好</h3>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">Preferences</p>
+          <h3 className="mt-1 text-2xl font-black text-primary">专注偏好</h3>
         </div>
 
         <div className="grid gap-4">
           <label className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 text-sm font-bold text-gray-300">
+            <div className="flex items-center gap-3 text-sm font-bold text-secondary">
               <Timer size={16} />
               <span>默认模式</span>
             </div>
             <select
               value={settings.defaultMode}
               onChange={(e) => onUpdateSettings({ defaultMode: e.target.value as FocusMode })}
-              className="rounded-xl bg-[#2a2a35] px-4 py-2 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-indigo-400"
+              className="rounded-xl bg-surface px-4 py-2 text-sm font-bold text-primary outline-none focus:ring-2 focus:ring-indigo-400"
             >
               {(Object.keys(MODE_LABELS) as FocusMode[]).map((m) => (
                 <option key={m} value={m}>
@@ -103,7 +103,7 @@ export function SettingsPanel({
           />
 
           <label className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 text-sm font-bold text-gray-300">
+            <div className="flex items-center gap-3 text-sm font-bold text-secondary">
               <Palette size={16} />
               <span>主题</span>
             </div>
@@ -112,7 +112,7 @@ export function SettingsPanel({
               onChange={(e) =>
                 onUpdateSettings({ theme: e.target.value as UserSettings["theme"] })
               }
-              className="rounded-xl bg-[#2a2a35] px-4 py-2 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-indigo-400"
+              className="rounded-xl bg-surface px-4 py-2 text-sm font-bold text-primary outline-none focus:ring-2 focus:ring-indigo-400"
             >
               <option value="system">跟随系统</option>
               <option value="dark">深色</option>
@@ -124,15 +124,15 @@ export function SettingsPanel({
             onClick={toggleNotifications}
             className="flex items-center justify-between gap-4 text-left"
           >
-            <div className="flex items-center gap-3 text-sm font-bold text-gray-300">
+            <div className="flex items-center gap-3 text-sm font-bold text-secondary">
               <Bell size={16} />
               <span>专注完成通知</span>
             </div>
             <span
               className={`rounded-full px-4 py-1 text-xs font-black uppercase tracking-widest ${
                 settings.notificationEnabled
-                  ? "bg-indigo-500/30 text-indigo-300"
-                  : "bg-[#2a2a35] text-gray-500"
+                  ? "bg-indigo-500/30 text-indigo-400"
+                  : "bg-surface text-muted"
               }`}
             >
               {settings.notificationEnabled ? "On" : "Off"}
@@ -143,8 +143,8 @@ export function SettingsPanel({
 
       <section className="offscreen-card">
         <div className="mb-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Data</p>
-          <h3 className="mt-1 text-2xl font-black text-white">数据与同步</h3>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">Data</p>
+          <h3 className="mt-1 text-2xl font-black text-primary">数据与同步</h3>
         </div>
 
         <div className="grid gap-3">
@@ -181,7 +181,7 @@ export function SettingsPanel({
         </div>
 
         {!isCloudSyncAvailable() ? (
-          <div className="mt-6 rounded-[1.25rem] bg-gray-800/50 p-5 text-[11px] font-bold uppercase tracking-wider text-gray-500 leading-relaxed">
+          <div className="mt-6 rounded-[1.25rem] bg-surface p-5 text-[11px] font-bold uppercase tracking-wider text-muted leading-relaxed">
             Cloud sync requires Supabase configuration.
           </div>
         ) : null}
@@ -201,14 +201,14 @@ function NumberPref({
 }) {
   return (
     <label className="flex items-center justify-between gap-4">
-      <span className="text-sm font-bold text-gray-300">{label}</span>
+      <span className="text-sm font-bold text-secondary">{label}</span>
       <input
         type="number"
         min={1}
         max={240}
         value={value}
         onChange={(e) => onChange(Math.max(1, Number(e.target.value) || 1))}
-        className="w-24 rounded-xl bg-[#2a2a35] px-4 py-2 text-right text-sm font-bold text-white outline-none focus:ring-2 focus:ring-indigo-400"
+        className="w-24 rounded-xl bg-surface px-4 py-2 text-right text-sm font-bold text-primary outline-none focus:ring-2 focus:ring-indigo-400"
       />
     </label>
   );

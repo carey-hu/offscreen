@@ -20,19 +20,17 @@ export function AudioPicker() {
   }, []);
 
   const toggleTrack = (track: typeof WHITE_NOISE_TRACKS[0]) => {
-    if (status.currentTrackId === track.id && status.isPlaying) {
-      audioController.pause();
-    } else {
-      audioController.play(track);
-    }
+    audioController.play(track);
   };
 
   return (
-    <div className="mt-6 border-t border-white/5 pt-6">
+    <div className="mt-6 border-t border-subtle pt-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Music2 size={16} className="text-gray-500" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Ambient Sound</span>
+          <Music2 size={16} className="text-muted" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted">
+            Ambient Sound
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <input
@@ -42,12 +40,12 @@ export function AudioPicker() {
             step="0.01"
             value={status.volume}
             onChange={(e) => audioController.setVolume(parseFloat(e.target.value))}
-            className="h-1 w-16 accent-white"
+            className="h-1 w-16 accent-indigo-400"
           />
           {status.isPlaying ? (
-            <Volume2 size={14} className="animate-pulse text-white" />
+            <Volume2 size={14} className="animate-pulse text-indigo-400" />
           ) : (
-            <VolumeX size={14} className="text-gray-600" />
+            <VolumeX size={14} className="text-faint" />
           )}
         </div>
       </div>
@@ -64,14 +62,14 @@ export function AudioPicker() {
               onClick={() => toggleTrack(track)}
               className={`flex flex-col items-center gap-2 rounded-2xl py-3 transition-all ${
                 isCurrentlyPlaying
-                  ? "scale-105 bg-white text-black"
+                  ? "scale-105 bg-indigo-500 text-white shadow-lg"
                   : isActive
-                  ? "bg-gray-800 text-white"
-                  : "bg-gray-900 text-gray-500 hover:bg-gray-800 hover:text-gray-300"
+                  ? "bg-surface-hover text-primary"
+                  : "bg-surface text-muted hover:bg-surface-hover hover:text-primary"
               }`}
             >
               <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[8px] font-black uppercase">{track.name}</span>
+              <span className="text-[10px] font-black uppercase">{track.name}</span>
             </button>
           );
         })}

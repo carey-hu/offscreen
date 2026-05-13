@@ -23,26 +23,25 @@ export function TimerPanel() {
 
   return (
     <div className="flex flex-col items-center">
-      {/* Title / Tag editor */}
       <div className="flex items-center gap-2 mb-6 sm:mb-8 max-w-full">
         {editing ? (
-          <div className="flex items-center gap-2 bg-[#22222b] px-3 sm:px-4 py-2 rounded-xl text-xs font-bold">
+          <div className="flex items-center gap-2 bg-card px-3 sm:px-4 py-2 rounded-xl text-xs font-bold">
             <input
               value={t.title}
               onChange={(e) => t.setTitle(e.target.value)}
-              className="bg-transparent text-white outline-none w-24 sm:w-28"
+              className="bg-transparent text-primary outline-none w-24 sm:w-28"
               placeholder="标题"
             />
-            <span className="text-gray-600">·</span>
+            <span className="text-faint">·</span>
             <input
               value={t.tag}
               onChange={(e) => t.setTag(e.target.value)}
-              className="bg-transparent text-indigo-300 outline-none w-16 sm:w-20"
+              className="bg-transparent text-indigo-400 outline-none w-16 sm:w-20"
               placeholder="标签"
             />
             <button
               onClick={() => setEditing(false)}
-              className="ml-2 text-gray-500 hover:text-white"
+              className="ml-2 text-muted hover:text-primary"
             >
               ✓
             </button>
@@ -51,10 +50,10 @@ export function TimerPanel() {
           <button
             onClick={() => setEditing(true)}
             disabled={t.running}
-            className="flex items-center gap-2 bg-[#22222b] px-3 sm:px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition disabled:opacity-60 max-w-full"
+            className="flex items-center gap-2 bg-card px-3 sm:px-4 py-2 rounded-xl text-xs font-bold text-muted hover:text-primary transition disabled:opacity-60 max-w-full"
           >
             <span className="shrink-0">专注于</span>
-            <span className="text-white truncate max-w-[120px] sm:max-w-[200px]">{t.title}</span>
+            <span className="text-primary truncate max-w-[120px] sm:max-w-[200px]">{t.title}</span>
             <span className="text-indigo-400/80 truncate max-w-[80px]">#{t.tag}</span>
             <ChevronDown size={14} className="shrink-0" />
           </button>
@@ -76,15 +75,11 @@ export function TimerPanel() {
         ))}
       </div>
 
-      {/* Main Timer Display — SVG progress ring */}
       <div
         className="relative mb-10 sm:mb-12"
         style={{ width: "min(380px, 82vw)", height: "min(380px, 82vw)" }}
       >
-        <svg
-          className="absolute inset-0 -rotate-90"
-          viewBox="0 0 100 100"
-        >
+        <svg className="absolute inset-0 -rotate-90" viewBox="0 0 100 100">
           <defs>
             <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#8a8aff" />
@@ -100,17 +95,15 @@ export function TimerPanel() {
             </filter>
           </defs>
 
-          {/* Track */}
           <circle
             cx="50"
             cy="50"
             r={RING_RADIUS}
             fill="none"
-            stroke="#22222b"
+            stroke="var(--bg-surface)"
             strokeWidth="3"
           />
 
-          {/* Progress */}
           <circle
             cx="50"
             cy="50"
@@ -124,23 +117,13 @@ export function TimerPanel() {
             filter="url(#ring-glow)"
             style={{ transition: "stroke-dashoffset 0.5s ease-out" }}
           />
-
-          {/* Subtle inner edge */}
-          <circle
-            cx="50"
-            cy="50"
-            r={RING_RADIUS - 2.5}
-            fill="none"
-            stroke="rgba(138,138,255,0.05)"
-            strokeWidth="0.5"
-          />
         </svg>
 
         <div className="absolute inset-0 flex items-center justify-center">
           {!t.running ? (
             <div className="flex flex-col items-center">
               {t.mode === "stopwatch" ? (
-                <div className="text-5xl sm:text-7xl font-black tracking-tighter tabular-nums text-white">
+                <div className="text-5xl sm:text-7xl font-black tracking-tighter tabular-nums text-primary">
                   00:00
                 </div>
               ) : (
@@ -152,10 +135,10 @@ export function TimerPanel() {
             </div>
           ) : (
             <div className="text-center">
-              <div className="text-5xl sm:text-7xl font-black tracking-tighter tabular-nums">
+              <div className="text-5xl sm:text-7xl font-black tracking-tighter tabular-nums text-primary">
                 {formatMs(t.displayMs)}
               </div>
-              <p className="mt-3 sm:mt-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-gray-600">
+              <p className="mt-3 sm:mt-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-faint">
                 {t.paused ? "Paused" : "Focusing"}
               </p>
             </div>
@@ -163,10 +146,9 @@ export function TimerPanel() {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="w-full max-w-xs space-y-4">
         {!t.running ? (
-          <button onClick={() => t.start()} className="btn-primary w-full text-indigo-400">
+          <button onClick={() => t.start()} className="btn-primary w-full">
             开始专注
           </button>
         ) : (
@@ -179,7 +161,7 @@ export function TimerPanel() {
             </button>
             <button
               onClick={() => t.finish("completed")}
-              className="btn-primary flex-1 !bg-white !text-black !px-4 sm:!px-10"
+              className="btn-primary flex-1 !px-4 sm:!px-10"
             >
               完成
             </button>

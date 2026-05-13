@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   addMonths,
-  endOfMonth,
   format,
   isSameDay,
   isSameMonth,
@@ -26,7 +25,6 @@ interface Props {
 export function CalendarPopover({ open, sessions, selectedDate, onSelect, onClose }: Props) {
   const [cursor, setCursor] = useState<Date>(selectedDate);
 
-  // Aggregate minutes per yyyy-MM-dd
   const minutesByDay = useMemo(() => {
     const map = new Map<string, number>();
     completedSessions(sessions).forEach((s) => {
@@ -37,8 +35,6 @@ export function CalendarPopover({ open, sessions, selectedDate, onSelect, onClos
   }, [sessions]);
 
   const monthStart = startOfMonth(cursor);
-  const monthEnd = endOfMonth(cursor);
-  // Build a 6-week grid starting from Monday of the first week
   const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
 
   const cells: Date[] = Array.from({ length: 42 }).map((_, i) => {
@@ -52,40 +48,37 @@ export function CalendarPopover({ open, sessions, selectedDate, onSelect, onClos
 
   if (!open) return null;
 
-  function intensity(date: Date): { bg: string; text: string } {
+  function intensity(date: Date): { bg: string } {
     const key = format(date, "yyyy-MM-dd");
     const mins = minutesByDay.get(key) ?? 0;
-    if (mins === 0) return { bg: "transparent", text: "text-gray-600" };
+    if (mins === 0) return { bg: "transparent" };
     const ratio = mins / maxMinutes;
     const alpha = 0.18 + ratio * 0.65;
-    return {
-      bg: `rgba(138, 138, 255, ${alpha.toFixed(2)})`,
-      text: "text-white"
-    };
+    return { bg: `rgba(138, 138, 255, ${alpha.toFixed(2)})` };
   }
 
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute right-0 top-14 z-50 w-[min(340px,90vw)] rounded-[1.5rem] bg-[#22222b] p-4 sm:p-5 shadow-2xl ring-1 ring-white/5">
+      <div className="absolute right-0 top-14 z-50 w-[min(340px,90vw)] rounded-[1.5rem] bg-card p-4 sm:p-5 shadow-2xl ring-1 ring-subtle">
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={() => setCursor((c) => subMonths(c, 1))}
-            className="grid h-8 w-8 place-items-center rounded-lg bg-[#2a2a35] text-gray-400 hover:text-white"
+            className="grid h-8 w-8 place-items-center rounded-lg bg-surface text-muted hover:text-primary"
           >
             <ChevronLeft size={16} />
           </button>
           <div className="text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted">
               点击日期查看详情
             </p>
-            <p className="mt-0.5 text-sm font-black text-white">
+            <p className="mt-0.5 text-sm font-black text-primary">
               {format(cursor, "yyyy年 M月", { locale: zhCN })}
             </p>
           </div>
           <button
             onClick={() => setCursor((c) => addMonths(c, 1))}
-            className="grid h-8 w-8 place-items-center rounded-lg bg-[#2a2a35] text-gray-400 hover:text-white"
+            className="grid h-8 w-8 place-items-center rounded-lg bg-surface text-muted hover:text-primary"
           >
             <ChevronRight size={16} />
           </button>
@@ -95,7 +88,7 @@ export function CalendarPopover({ open, sessions, selectedDate, onSelect, onClos
           {["一", "二", "三", "四", "五", "六", "日"].map((d) => (
             <div
               key={d}
-              className="text-center text-[10px] font-black uppercase tracking-wider text-gray-600"
+              className="text-center text-[10px] font-black uppercase tracking-wider text-muted"
             >
               {d}
             </div>
@@ -109,7 +102,13 @@ export function CalendarPopover({ open, sessions, selectedDate, onSelect, onClos
             const inMonth = isSameMonth(d, cursor);
             const isSelected = isSameDay(d, selectedDate);
             const isToday = isSameDay(d, today);
-            const { bg, text } = intensity(d);
+            const { bg } = intensity(d);
+
+            const textClass = !inMonth
+              ? "text-faint opacity-40"
+              : mins > 0
+              ? "text-primary"
+              : "text-muted";
 
             return (
               <button
@@ -118,14 +117,14 @@ export function CalendarPopover({ open, sessions, selectedDate, onSelect, onClos
                   onSelect(d);
                   onClose();
                 }}
-                className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold transition ${
-                  inMonth ? text : "text-gray-700"
-                } ${isSelected ? "ring-2 ring-indigo-400" : ""} hover:ring-1 hover:ring-white/20`}
+                className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold transition ${textClass} ${
+                  isSelected ? "ring-2 ring-indigo-400" : ""
+                } hover:ring-1 hover:ring-indigo-400/40`}
                 style={{ background: inMonth ? bg : "transparent" }}
               >
-                <span className={isToday ? "text-indigo-300" : ""}>{d.getDate()}</span>
+                <span className={isToday ? "text-indigo-400" : ""}>{d.getDate()}</span>
                 {mins > 0 && inMonth && (
-                  <span className="text-[8px] font-black text-white/80 leading-none mt-0.5">
+                  <span className="text-[8px] font-black leading-none mt-0.5 opacity-80">
                     {mins}m
                   </span>
                 )}
@@ -134,7 +133,7 @@ export function CalendarPopover({ open, sessions, selectedDate, onSelect, onClos
           })}
         </div>
 
-        <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500">
+        <div className="mt-4 pt-3 border-t border-subtle flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted">
           <span>专注热度</span>
           <div className="flex items-center gap-1">
             {[0.18, 0.35, 0.55, 0.75].map((a) => (
@@ -144,7 +143,7 @@ export function CalendarPopover({ open, sessions, selectedDate, onSelect, onClos
                 style={{ background: `rgba(138, 138, 255, ${a})` }}
               />
             ))}
-            <span className="ml-1 text-gray-600">高</span>
+            <span className="ml-1 text-faint">高</span>
           </div>
         </div>
       </div>

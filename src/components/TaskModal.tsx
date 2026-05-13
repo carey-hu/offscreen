@@ -48,25 +48,25 @@ export function TaskModal({ open, initial, onClose, onSave }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md mx-4 rounded-[2rem] bg-[#22222b] p-8 shadow-2xl"
+        className="w-full max-w-md rounded-[2rem] bg-card p-6 sm:p-8 shadow-2xl"
       >
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
               {isEdit ? "Edit task" : "New task"}
             </p>
-            <h3 className="mt-1 text-2xl font-black text-white">
+            <h3 className="mt-1 text-2xl font-black text-primary">
               {isEdit ? "编辑任务" : "新建任务"}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[#2a2a35] text-gray-400 hover:text-white"
+            className="grid h-9 w-9 place-items-center rounded-full bg-surface text-muted hover:text-primary"
           >
             <X size={18} />
           </button>
@@ -74,7 +74,7 @@ export function TaskModal({ open, initial, onClose, onSave }: Props) {
 
         <div className="space-y-4">
           <label className="block">
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted">
               图标
             </span>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -84,7 +84,9 @@ export function TaskModal({ open, initial, onClose, onSave }: Props) {
                   type="button"
                   onClick={() => setIcon(e)}
                   className={`grid h-10 w-10 place-items-center rounded-xl text-xl transition ${
-                    icon === e ? "bg-indigo-500/30 ring-2 ring-indigo-400" : "bg-[#2a2a35] hover:bg-[#353545]"
+                    icon === e
+                      ? "bg-indigo-500/30 ring-2 ring-indigo-400"
+                      : "bg-surface hover:bg-surface-hover"
                   }`}
                 >
                   {e}
@@ -93,20 +95,20 @@ export function TaskModal({ open, initial, onClose, onSave }: Props) {
               <input
                 value={icon}
                 onChange={(e) => setIcon(e.target.value.slice(0, 4))}
-                className="h-10 w-16 rounded-xl bg-[#2a2a35] px-2 text-center text-xl outline-none focus:ring-2 focus:ring-indigo-400"
+                className="h-10 w-16 rounded-xl bg-surface px-2 text-center text-xl outline-none focus:ring-2 focus:ring-indigo-400 text-primary"
                 placeholder="自定义"
               />
             </div>
           </label>
 
           <label className="block">
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted">
               标题
             </span>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="mt-2 w-full rounded-2xl bg-[#2a2a35] px-4 py-3 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-indigo-400"
+              className="mt-2 w-full rounded-2xl bg-surface px-4 py-3 text-sm font-bold text-primary outline-none focus:ring-2 focus:ring-indigo-400"
               placeholder="例如:阅读"
               autoFocus
             />
@@ -114,18 +116,18 @@ export function TaskModal({ open, initial, onClose, onSave }: Props) {
 
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted">
                 标签
               </span>
               <input
                 value={tag}
                 onChange={(e) => setTag(e.target.value)}
-                className="mt-2 w-full rounded-2xl bg-[#2a2a35] px-4 py-3 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-indigo-400"
+                className="mt-2 w-full rounded-2xl bg-surface px-4 py-3 text-sm font-bold text-primary outline-none focus:ring-2 focus:ring-indigo-400"
                 placeholder="工作 / 学习"
               />
             </label>
             <label className="block">
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted">
                 计划分钟
               </span>
               <input
@@ -134,19 +136,19 @@ export function TaskModal({ open, initial, onClose, onSave }: Props) {
                 max={600}
                 value={plannedMinutes}
                 onChange={(e) => setPlannedMinutes(Math.max(1, Number(e.target.value) || 25))}
-                className="mt-2 w-full rounded-2xl bg-[#2a2a35] px-4 py-3 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-indigo-400"
+                className="mt-2 w-full rounded-2xl bg-surface px-4 py-3 text-sm font-bold text-primary outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </label>
           </div>
 
           <label className="block">
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted">
               备注
             </span>
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-2 w-full rounded-2xl bg-[#2a2a35] px-4 py-3 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-indigo-400"
+              className="mt-2 w-full rounded-2xl bg-surface px-4 py-3 text-sm font-bold text-primary outline-none focus:ring-2 focus:ring-indigo-400"
               placeholder="--"
             />
           </label>
@@ -156,7 +158,7 @@ export function TaskModal({ open, initial, onClose, onSave }: Props) {
           <button onClick={onClose} className="btn-secondary flex-1">
             取消
           </button>
-          <button onClick={handleSave} className="btn-primary flex-1 !bg-white !text-black">
+          <button onClick={handleSave} className="btn-primary flex-1">
             {isEdit ? "保存" : "新建"}
           </button>
         </div>

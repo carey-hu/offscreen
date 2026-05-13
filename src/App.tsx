@@ -13,6 +13,7 @@ import { DayDetailModal } from "./components/DayDetailModal";
 import { useSessions } from "./hooks/useSessions";
 import { useSettings } from "./hooks/useSettings";
 import { useTasks } from "./hooks/useTasks";
+import { useThemeApplier } from "./hooks/useThemeApplier";
 import { TimerProvider } from "./contexts/TimerContext";
 import { Task } from "./types";
 
@@ -26,6 +27,8 @@ export default function App() {
   const [createTaskSignal, setCreateTaskSignal] = useState(0);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [detailDate, setDetailDate] = useState<Date | null>(null);
+
+  useThemeApplier(settings.theme);
 
   function shiftDate(days: number) {
     const next = new Date(selectedDate);
@@ -56,13 +59,15 @@ export default function App() {
 
   return (
     <TimerProvider settings={settings} onSave={upsertSession} onEnsureTask={ensureTask}>
-      <main className="min-h-screen bg-[#1a1a22] text-white selection:bg-indigo-500/30">
+      <main className="min-h-screen bg-base text-primary selection:bg-indigo-500/30">
         <header className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-8 py-4 sm:py-6">
           <div className="order-1 flex items-center gap-2 sm:gap-4">
             <button
               onClick={() => setHistoryView((v) => !v)}
               className={`grid h-10 w-10 place-items-center rounded-xl transition shadow-lg ${
-                historyView ? "bg-indigo-500/20 text-indigo-300" : "bg-[#22222b] text-gray-400 hover:text-white"
+                historyView
+                  ? "bg-indigo-500/20 text-indigo-400"
+                  : "bg-card text-muted hover:text-primary"
               }`}
               title="切换历史视图"
             >
@@ -70,7 +75,7 @@ export default function App() {
             </button>
             <button
               onClick={() => setCreateTaskSignal((s) => s + 1)}
-              className="grid h-10 w-10 place-items-center rounded-xl bg-[#22222b] text-gray-400 hover:text-white transition shadow-lg"
+              className="grid h-10 w-10 place-items-center rounded-xl bg-card text-muted hover:text-primary transition shadow-lg"
               title="新建任务"
             >
               <Plus size={20} />
@@ -78,10 +83,10 @@ export default function App() {
           </div>
 
           <div className="order-2 sm:order-3 flex items-center gap-2 sm:gap-4">
-            <div className="flex items-center gap-2 sm:gap-3 bg-[#22222b] px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-gray-300 shadow-lg">
+            <div className="flex items-center gap-2 sm:gap-3 bg-card px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-secondary shadow-lg">
               <button
                 onClick={() => shiftDate(-1)}
-                className="text-gray-500 hover:text-white transition"
+                className="text-muted hover:text-primary transition"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -93,7 +98,7 @@ export default function App() {
               </span>
               <button
                 onClick={() => shiftDate(1)}
-                className="text-gray-500 hover:text-white transition"
+                className="text-muted hover:text-primary transition"
               >
                 <ChevronRight size={16} />
               </button>
@@ -103,8 +108,8 @@ export default function App() {
                 onClick={() => setCalendarOpen((o) => !o)}
                 className={`grid h-10 w-10 place-items-center rounded-xl transition shadow-lg ${
                   calendarOpen
-                    ? "bg-indigo-500/20 text-indigo-300"
-                    : "bg-[#22222b] text-gray-400 hover:text-white"
+                    ? "bg-indigo-500/20 text-indigo-400"
+                    : "bg-card text-muted hover:text-primary"
                 }`}
                 title="日历 · 每日专注"
               >
@@ -123,11 +128,13 @@ export default function App() {
             </div>
           </div>
 
-          <nav className="order-3 sm:order-2 w-full sm:w-auto flex items-center justify-center bg-[#22222b] p-1 rounded-2xl shadow-xl">
+          <nav className="order-3 sm:order-2 w-full sm:w-auto flex items-center justify-center bg-card p-1 rounded-2xl shadow-xl">
             <button
               onClick={() => setActiveTab("stats")}
               className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
-                activeTab === "stats" ? "bg-[#3d3d4d] text-white" : "text-gray-500 hover:text-gray-300"
+                activeTab === "stats"
+                  ? "bg-surface-active text-primary"
+                  : "text-muted hover:text-secondary"
               }`}
             >
               屏幕使用时间
@@ -135,7 +142,9 @@ export default function App() {
             <button
               onClick={() => setActiveTab("focus")}
               className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
-                activeTab === "focus" ? "bg-[#3d3d4d] text-white" : "text-gray-500 hover:text-gray-300"
+                activeTab === "focus"
+                  ? "bg-surface-active text-primary"
+                  : "text-muted hover:text-secondary"
               }`}
             >
               专注
@@ -143,7 +152,9 @@ export default function App() {
             <button
               onClick={() => setActiveTab("settings")}
               className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
-                activeTab === "settings" ? "bg-[#3d3d4d] text-white" : "text-gray-500 hover:text-gray-300"
+                activeTab === "settings"
+                  ? "bg-surface-active text-primary"
+                  : "text-muted hover:text-secondary"
               }`}
             >
               设置

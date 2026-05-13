@@ -42,7 +42,6 @@ export function TaskDetailModal({ open, task, onClose }: Props) {
     setContent("");
   }
 
-  // Group notes by date
   const grouped = notes.reduce<Record<string, TaskNote[]>>((acc, n) => {
     (acc[n.date] = acc[n.date] ?? []).push(n);
     return acc;
@@ -56,38 +55,37 @@ export function TaskDetailModal({ open, task, onClose }: Props) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg rounded-[2rem] bg-[#22222b] p-6 sm:p-8 shadow-2xl max-h-[90vh] flex flex-col"
+        className="w-full max-w-lg rounded-[2rem] bg-card p-6 sm:p-8 shadow-2xl max-h-[90vh] flex flex-col"
       >
         <div className="mb-6 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-[#2a2a35] text-2xl shrink-0">
+            <div className="grid h-12 w-12 place-items-center rounded-full bg-surface text-2xl shrink-0">
               {task.icon}
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
                 Task notes
               </p>
-              <h3 className="mt-0.5 text-xl font-black text-white truncate">{task.title}</h3>
+              <h3 className="mt-0.5 text-xl font-black text-primary truncate">{task.title}</h3>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[#2a2a35] text-gray-400 hover:text-white shrink-0"
+            className="grid h-9 w-9 place-items-center rounded-full bg-surface text-muted hover:text-primary shrink-0"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Add new note */}
-        <div className="rounded-2xl bg-[#1a1a22] p-4 mb-4">
+        <div className="rounded-2xl bg-base p-4 mb-4">
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="rounded-xl bg-[#2a2a35] px-3 py-2 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-indigo-400"
+              className="rounded-xl bg-surface px-3 py-2 text-xs font-bold text-primary outline-none focus:ring-2 focus:ring-indigo-400"
             />
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted">
               记录今日做了什么
             </span>
           </div>
@@ -96,23 +94,22 @@ export function TaskDetailModal({ open, task, onClose }: Props) {
             onChange={(e) => setContent(e.target.value)}
             placeholder="今天的进展、收获、卡点... 可换行"
             rows={5}
-            className="w-full min-h-[120px] rounded-xl bg-[#2a2a35] p-3 text-sm leading-relaxed text-white outline-none resize-y focus:ring-2 focus:ring-indigo-400"
+            className="w-full min-h-[120px] rounded-xl bg-surface p-3 text-sm leading-relaxed text-primary outline-none resize-y focus:ring-2 focus:ring-indigo-400"
           />
           <div className="mt-3 flex justify-end">
             <button
               onClick={handleAdd}
               disabled={!content.trim()}
-              className="btn-primary !bg-white !text-black !px-6 !py-2 !text-sm disabled:opacity-40"
+              className="btn-primary !px-6 !py-2 !text-sm disabled:opacity-40"
             >
               添加
             </button>
           </div>
         </div>
 
-        {/* Notes list */}
         <div className="flex-1 overflow-y-auto no-scrollbar space-y-4">
           {dates.length === 0 ? (
-            <div className="rounded-2xl bg-[#1a1a22] p-8 text-center text-xs font-bold uppercase tracking-widest text-gray-600">
+            <div className="rounded-2xl bg-base p-8 text-center text-xs font-bold uppercase tracking-widest text-faint">
               暂无记录
             </div>
           ) : (
@@ -125,14 +122,14 @@ export function TaskDetailModal({ open, task, onClose }: Props) {
                   {grouped[d].map((note) => (
                     <div
                       key={note.id}
-                      className="group flex items-start gap-3 rounded-2xl bg-[#1a1a22] p-4"
+                      className="group flex items-start gap-3 rounded-2xl bg-base p-4"
                     >
-                      <p className="flex-1 text-sm leading-relaxed text-gray-200 whitespace-pre-wrap break-words">
+                      <p className="flex-1 text-sm leading-relaxed text-secondary whitespace-pre-wrap break-words">
                         {note.content}
                       </p>
                       <button
                         onClick={() => remove(note.id)}
-                        className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 transition shrink-0 mt-0.5"
+                        className="opacity-0 group-hover:opacity-100 text-faint hover:text-red-400 transition shrink-0 mt-0.5"
                         aria-label="删除"
                       >
                         <Trash2 size={14} />

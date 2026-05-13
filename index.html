@@ -2,9 +2,28 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="theme-color" content="#111827" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1a1a22" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4f4f7" media="(prefers-color-scheme: light)" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>OpenFocus</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("openfocus_theme");
+          var resolved;
+          if (stored === "light" || stored === "dark") {
+            resolved = stored;
+          } else {
+            resolved = window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          }
+          if (resolved === "dark") {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
