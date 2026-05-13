@@ -93,8 +93,8 @@ export function TaskSidebar({
                   </div>
                   <div className="mt-1 flex items-center gap-2 flex-wrap">
                     <span
-                      className="rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase"
-                      style={{ background: `${accent}33`, color: accent }}
+                      className="rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase text-secondary"
+                      style={{ background: `${accent}44` }}
                     >
                       {task.tag}
                     </span>
@@ -136,8 +136,11 @@ export function TaskSidebar({
                 <button
                   onClick={() => startTask(task)}
                   disabled={timer.running}
-                  className="grid h-10 w-10 sm:h-11 sm:w-11 place-items-center rounded-full bg-surface text-muted transition-all hover:bg-surface-hover active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
-                  style={{ color: timer.running ? undefined : accent }}
+                  className="grid h-10 w-10 sm:h-11 sm:w-11 place-items-center rounded-full transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{
+                    background: timer.running ? undefined : `${accent}22`,
+                    color: timer.running ? undefined : accent
+                  }}
                 >
                   <Play size={18} fill="currentColor" />
                 </button>

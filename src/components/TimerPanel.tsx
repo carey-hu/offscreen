@@ -1,6 +1,5 @@
 import { RotateCcw, ChevronDown } from "lucide-react";
 import { FocusMode } from "../types";
-import { AudioPicker } from "./AudioPicker";
 import { WheelPicker } from "./WheelPicker";
 import { useTimer } from "../contexts/TimerContext";
 import { useState } from "react";
@@ -172,9 +171,6 @@ export function TimerPanel() {
         )}
       </div>
 
-      <div className="mt-10 sm:mt-12 w-full">
-        <AudioPicker />
-      </div>
     </div>
   );
 }

@@ -14,18 +14,10 @@ export interface FocusSession {
   actualMinutes: number;
   status: FocusStatus;
   focusScore?: number;
-  whiteNoiseId?: string;
   note?: string;
   createdAt: string;
   updatedAt: string;
   syncedAt?: string;
-}
-
-export interface WhiteNoiseTrack {
-  id: string;
-  name: string;
-  icon: string;
-  url: string;
 }
 
 export interface Task {
