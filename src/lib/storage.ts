@@ -1,11 +1,12 @@
-import { FocusSession, Task, TaskNote, UserSettings } from "../types";
+import { FocusSession, MoodEntry, Task, TaskNote, UserSettings } from "../types";
 
 const DB_NAME = "openfocus_db";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 const SESSION_STORE = "focus_sessions";
 const SETTINGS_STORE = "settings";
 const TASK_STORE = "tasks";
 const TASK_NOTE_STORE = "task_notes";
+const MOOD_STORE = "mood_entries";
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -35,6 +36,11 @@ function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(TASK_NOTE_STORE)) {
         const store = db.createObjectStore(TASK_NOTE_STORE, { keyPath: "id" });
         store.createIndex("taskId", "taskId");
+        store.createIndex("date", "date");
+      }
+
+      if (!db.objectStoreNames.contains(MOOD_STORE)) {
+        const store = db.createObjectStore(MOOD_STORE, { keyPath: "id" });
         store.createIndex("date", "date");
       }
 
@@ -154,4 +160,25 @@ export async function getNotesByDate(date: string): Promise<TaskNote[]> {
 
 export async function deleteTaskNote(id: string): Promise<void> {
   await tx(TASK_NOTE_STORE, "readwrite", (store) => store.delete(id));
+}
+
+export async function saveMoodEntry(entry: MoodEntry): Promise<void> {
+  await tx(MOOD_STORE, "readwrite", (store) => store.put(entry));
+}
+
+export async function getAllMoodEntries(): Promise<MoodEntry[]> {
+  const result = await tx<MoodEntry[]>(MOOD_STORE, "readonly", (store) => store.getAll());
+  return (result ?? []).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function getMoodEntriesByDate(date: string): Promise<MoodEntry[]> {
+  const result = await tx<MoodEntry[]>(MOOD_STORE, "readonly", (store) => {
+    const index = store.index("date");
+    return index.getAll(date);
+  });
+  return (result ?? []).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function deleteMoodEntry(id: string): Promise<void> {
+  await tx(MOOD_STORE, "readwrite", (store) => store.delete(id));
 }

@@ -19,9 +19,11 @@ interface Props {
   summaryOnly?: boolean;
   onOpenFocusStats?: () => void;
   onOpenSessionHistory?: () => void;
+  moodTodayCount?: number;
+  onOpenStarJar?: () => void;
 }
 
-export function StatsPanel({ sessions, selectedDate, summaryOnly, onOpenFocusStats, onOpenSessionHistory }: Props) {
+export function StatsPanel({ sessions, selectedDate, summaryOnly, onOpenFocusStats, onOpenSessionHistory, moodTodayCount, onOpenStarJar }: Props) {
   // Summary cards always reflect TODAY regardless of the navigated date
   const todayRef = new Date();
   const todaySess = sessions.filter((s) => isSameDay(parseISO(s.startTime), todayRef));
@@ -34,9 +36,6 @@ export function StatsPanel({ sessions, selectedDate, summaryOnly, onOpenFocusSta
   const latestEver = sessions.find((s) => s.status === "completed");
   const latestMins = latestEver?.actualMinutes ?? 0;
   const latestTitle = latestEver?.title ?? "";
-
-  const todayFailed = todaySess.filter((s) => s.status === "abandoned").length;
-
   if (summaryOnly) {
     return (
       <div className="grid grid-cols-3 gap-3 sm:gap-6">
@@ -107,21 +106,42 @@ export function StatsPanel({ sessions, selectedDate, summaryOnly, onOpenFocusSta
           </div>
         </button>
 
-        <div className="offscreen-card relative overflow-hidden h-40 sm:h-44">
+        <button
+          onClick={onOpenStarJar}
+          className="offscreen-card relative overflow-hidden h-40 sm:h-44 w-full text-left cursor-pointer hover:scale-[1.02] transition-transform"
+        >
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted mb-2">
-            失败次数
+            今日星星
           </p>
-          <div className="flex items-baseline gap-1">
-            <span className="text-3xl sm:text-4xl font-black text-primary">{todayFailed}</span>
-            <span className="text-sm font-bold text-faint">次</span>
+          {(!moodTodayCount || moodTodayCount === 0) ? (
+            <>
+              <div className="text-2xl sm:text-3xl font-black text-faint">--</div>
+              <p className="mt-1 text-[10px] font-black text-faint uppercase tracking-widest">
+                今日尚未记录
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-baseline gap-1">
+                <span
+                  className="text-3xl sm:text-4xl font-black"
+                  style={{ color: "var(--star-glow)" }}
+                >
+                  {moodTodayCount}
+                </span>
+                <span className="text-sm font-bold" style={{ color: "var(--star-bright)" }}>
+                  {moodTodayCount <= 2 ? "⭐" : moodTodayCount <= 5 ? "🌟" : "💫"}
+                </span>
+              </div>
+              <p className="mt-1 text-[10px] font-black text-faint uppercase tracking-widest">
+                今日心情记录
+              </p>
+            </>
+          )}
+          <div className="absolute -bottom-4 -right-4 h-20 w-20 sm:h-24 sm:w-24 opacity-20 flex items-center justify-center text-5xl sm:text-6xl">
+            {moodTodayCount && moodTodayCount > 0 ? "⭐" : "✨"}
           </div>
-          <p className="mt-1 text-[10px] font-black text-faint uppercase tracking-widest">
-            今日放弃次数
-          </p>
-          <div className="absolute -bottom-4 -right-4 h-20 w-20 sm:h-24 sm:w-24 opacity-20 flex items-center justify-center text-5xl sm:text-6xl grayscale">
-            {todayFailed > 0 ? "😵" : "😌"}
-          </div>
-        </div>
+        </button>
       </div>
     );
   }

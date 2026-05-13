@@ -176,3 +176,56 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ── Star Jar ── */
+
+:root {
+  --star-glow: #fbbf24;
+  --star-bright: #f59e0b;
+  --star-dim: #d97706;
+  --star-particle: #fde68a;
+  --jar-glass: rgba(251, 191, 36, 0.08);
+  --jar-rim: rgba(251, 191, 36, 0.3);
+}
+
+:root.dark {
+  --jar-glass: rgba(251, 191, 36, 0.05);
+  --jar-rim: rgba(251, 191, 36, 0.2);
+}
+
+@keyframes starFloat1 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(5deg); }
+}
+@keyframes starFloat2 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(-4deg); }
+}
+@keyframes starFloat3 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(8deg); }
+}
+@keyframes starFloat4 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(-7deg); }
+}
+@keyframes starFloat5 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(3deg); }
+}
+
+@keyframes jarWobble {
+  0%, 100% { transform: rotate(0deg) translateY(0px); }
+  25% { transform: rotate(0.8deg) translateY(-1px); }
+  75% { transform: rotate(-0.6deg) translateY(1px); }
+}
+
+@keyframes starGlowPulse {
+  0%, 100% { filter: drop-shadow(0 0 6px var(--star-glow)); }
+  50% { filter: drop-shadow(0 0 16px var(--star-bright)) drop-shadow(0 0 24px var(--star-glow)); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 0.8; transform: scale(1); }
+}

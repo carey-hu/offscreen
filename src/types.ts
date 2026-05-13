@@ -46,3 +46,11 @@ export interface TaskNote {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface MoodEntry {
+  id: string;
+  date: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}

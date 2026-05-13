@@ -8,6 +8,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { TaskSidebar } from "./components/TaskSidebar";
 import { ScreenTimePanel } from "./components/ScreenTimePanel";
 import { SessionList } from "./components/SessionList";
+import { StarJarPage } from "./components/StarJarPage";
 import { CalendarPopover } from "./components/CalendarPopover";
 import { DayDetailModal } from "./components/DayDetailModal";
 import { FocusStatsModal } from "./components/FocusStatsModal";
@@ -15,6 +16,7 @@ import { SessionHistoryModal } from "./components/SessionHistoryModal";
 import { useSessions } from "./hooks/useSessions";
 import { useSettings } from "./hooks/useSettings";
 import { useTasks } from "./hooks/useTasks";
+import { useMoodEntries } from "./hooks/useMoodEntries";
 import { useThemeApplier } from "./hooks/useThemeApplier";
 import { TimerProvider } from "./contexts/TimerContext";
 import { Task } from "./types";
@@ -23,7 +25,8 @@ export default function App() {
   const { sessions, upsert: upsertSession, remove: removeSession, clear, refresh } = useSessions();
   const { tasks, upsert: upsertTask, remove: removeTask } = useTasks();
   const { settings, update: updateSettings } = useSettings();
-  const [activeTab, setActiveTab] = useState<"stats" | "focus" | "settings">("focus");
+  const { entries: moodEntries, upsert: upsertMood, remove: removeMood } = useMoodEntries();
+  const [activeTab, setActiveTab] = useState<"stats" | "focus" | "settings" | "starjar">("focus");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [historyView, setHistoryView] = useState(false);
   const [createTaskSignal, setCreateTaskSignal] = useState(0);
@@ -163,47 +166,69 @@ export default function App() {
             >
               设置
             </button>
+            <button
+              onClick={() => setActiveTab("starjar")}
+              className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
+                activeTab === "starjar"
+                  ? "bg-surface-active text-primary"
+                  : "text-muted hover:text-secondary"
+              }`}
+            >
+              星星罐
+            </button>
           </nav>
         </header>
 
-        <div className="mx-auto grid max-w-[1400px] gap-6 sm:gap-8 px-4 sm:px-8 pb-12 lg:grid-cols-[1fr_400px]">
-          <div className="space-y-8 sm:space-y-12">
-            {activeTab === "focus" ? (
-              historyView ? (
-                <SessionList sessions={sessions} onRemove={removeSession} />
-              ) : (
-                <>
-                  <TimerPanel />
-                  <StatsPanel
-                    sessions={sessions}
-                    selectedDate={selectedDate}
-                    summaryOnly
-                    onOpenFocusStats={() => setFocusStatsOpen(true)}
-                    onOpenSessionHistory={() => setSessionHistoryOpen(true)}
-                  />
-                </>
-              )
-            ) : activeTab === "settings" ? (
-              <SettingsPanel
-                sessions={sessions}
-                settings={settings}
-                onUpdateSettings={updateSettings}
-                onClear={clear}
-                onRefresh={refresh}
-              />
-            ) : (
-              <ScreenTimePanel sessions={sessions} selectedDate={selectedDate} />
-            )}
+        {activeTab === "starjar" ? (
+          <div className="mx-auto max-w-[600px] px-4 sm:px-8 pb-12">
+            <StarJarPage
+              entries={moodEntries}
+              onUpsert={upsertMood}
+              onDelete={removeMood}
+            />
           </div>
+        ) : (
+          <div className="mx-auto grid max-w-[1400px] gap-6 sm:gap-8 px-4 sm:px-8 pb-12 lg:grid-cols-[1fr_400px]">
+            <div className="space-y-8 sm:space-y-12">
+              {activeTab === "focus" ? (
+                historyView ? (
+                  <SessionList sessions={sessions} onRemove={removeSession} />
+                ) : (
+                  <>
+                    <TimerPanel />
+                    <StatsPanel
+                      sessions={sessions}
+                      selectedDate={selectedDate}
+                      summaryOnly
+                      onOpenFocusStats={() => setFocusStatsOpen(true)}
+                      onOpenSessionHistory={() => setSessionHistoryOpen(true)}
+                      moodTodayCount={moodEntries.filter((e) => e.date === new Date().toISOString().slice(0, 10)).length}
+                      onOpenStarJar={() => setActiveTab("starjar")}
+                    />
+                  </>
+                )
+              ) : activeTab === "settings" ? (
+                <SettingsPanel
+                  sessions={sessions}
+                  settings={settings}
+                  onUpdateSettings={updateSettings}
+                  onClear={clear}
+                  onRefresh={refresh}
+                />
+              ) : (
+                <ScreenTimePanel sessions={sessions} selectedDate={selectedDate} />
+              )}
+            </div>
 
-          <TaskSidebar
-            tasks={tasks}
-            onUpsertTask={upsertTask}
-            onRemoveTask={removeTask}
-            openCreateSignal={createTaskSignal}
-            onConsumedCreateSignal={() => {}}
-          />
-        </div>
+            <TaskSidebar
+              tasks={tasks}
+              onUpsertTask={upsertTask}
+              onRemoveTask={removeTask}
+              openCreateSignal={createTaskSignal}
+              onConsumedCreateSignal={() => {}}
+            />
+          </div>
+        )}
 
         <DayDetailModal
           open={detailDate !== null}
