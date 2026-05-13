@@ -143,18 +143,6 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
               </feMerge>
             </filter>
 
-            {/* Galaxy glow behind jar */}
-            <radialGradient id="gCore" cx="50%" cy="58%" r="35%">
-              <stop offset="0%" stopColor="#fff8d6" stopOpacity="0.55" />
-              <stop offset="35%" stopColor="#ffe08a" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#e89840" stopOpacity="0" />
-            </radialGradient>
-            <radialGradient id="gMid" cx="50%" cy="58%" r="50%">
-              <stop offset="0%" stopColor="#fff0b0" stopOpacity="0.3" />
-              <stop offset="55%" stopColor="#e0a060" stopOpacity="0.08" />
-              <stop offset="100%" stopColor="#7060b0" stopOpacity="0" />
-            </radialGradient>
-
             {/* Inner bottom glow */}
             <radialGradient id="innerGlow" cx="50%" cy="92%" r="38%">
               <stop offset="0%" stopColor="#fff4c0" stopOpacity="0.45" />
@@ -220,15 +208,8 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             style={{ transition: "opacity 0.8s ease" }}
           />
 
-          {/* Stars + galaxy glow — clipped to jar interior */}
+          {/* Stars clipped to jar interior */}
           <g clipPath="url(#jarInterior)">
-            {/* Galaxy glow behind stars */}
-            <g style={{ animation: `galaxyBreathing ${4 + total * 0.25}s ease-in-out infinite` }}>
-              <ellipse cx="160" cy="300" rx={glow.mid.rx + 15} ry={glow.mid.ry + 12}
-                fill="url(#gMid)" opacity={glow.mid.opacity} />
-              <ellipse cx="160" cy="300" rx={glow.core.rx + 8} ry={glow.core.ry + 6}
-                fill="url(#gCore)" opacity={glow.core.opacity} />
-            </g>
             {entriesWithPos.map((entry, idx) => {
               const pos = starPositions.get(entry.id);
               if (!pos) return null;
