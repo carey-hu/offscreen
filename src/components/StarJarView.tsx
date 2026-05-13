@@ -63,13 +63,14 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
 
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const entriesWithPos = useMemo(() => entries.filter(hasPosition), [entries]);
-  const total = entriesWithPos.length;
-  const glow = useMemo(() => computeGalaxyGlow(total), [total]);
+  const visibleStars = entriesWithPos.length;
+  const total = entries.length;
+  const glow = useMemo(() => computeGalaxyGlow(visibleStars), [visibleStars]);
   const starPositions = useMemo(() => computeStarLayout(entries), [entries]);
 
-  // Jar outer glow radius scales with star count (0 → 40px blur)
-  const jarGlowBlur = Math.min(40, 4 + total * 1.4);
-  const jarGlowOpacity = Math.min(0.55, 0.05 + total * 0.02);
+  // Jar outer glow radius scales with visible star count (0 → 40px blur)
+  const jarGlowBlur = Math.min(40, 4 + visibleStars * 1.4);
+  const jarGlowOpacity = Math.min(0.55, 0.05 + visibleStars * 0.02);
 
   async function handleSend() {
     const v = text.trim();
