@@ -13,9 +13,14 @@ const modeOptions: Array<{ label: string; value: FocusMode }> = [
   { label: "翻转",     value: "flip" }
 ];
 
+const RING_RADIUS = 46;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
 export function TimerPanel() {
   const t = useTimer();
   const [editing, setEditing] = useState(false);
+
+  const dashOffset = RING_CIRCUMFERENCE * (1 - Math.min(1, t.progress / 100));
 
   return (
     <div className="flex flex-col items-center">
@@ -72,17 +77,62 @@ export function TimerPanel() {
         ))}
       </div>
 
-      {/* Main Timer Display */}
-      <div className="relative mb-12">
-        <div
-          className="grid h-[380px] w-[380px] place-items-center rounded-full border-[12px] border-[#22222b]"
-          style={{
-            background: `conic-gradient(#8a8aff ${t.progress}%, transparent ${t.progress}%)`,
-            maskImage: "radial-gradient(transparent 64%, black 65%)",
-            WebkitMaskImage: "radial-gradient(transparent 64%, black 65%)"
-          }}
-        />
-        <div className="absolute inset-0 grid h-[380px] w-[380px] place-items-center rounded-full border-[12px] border-[#22222b] opacity-20" />
+      {/* Main Timer Display — SVG progress ring */}
+      <div className="relative h-[380px] w-[380px] mb-12">
+        <svg
+          className="absolute inset-0 -rotate-90"
+          viewBox="0 0 100 100"
+        >
+          <defs>
+            <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#8a8aff" />
+              <stop offset="50%" stopColor="#a89aff" />
+              <stop offset="100%" stopColor="#c08aff" />
+            </linearGradient>
+            <filter id="ring-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="1.2" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {/* Track */}
+          <circle
+            cx="50"
+            cy="50"
+            r={RING_RADIUS}
+            fill="none"
+            stroke="#22222b"
+            strokeWidth="3"
+          />
+
+          {/* Progress */}
+          <circle
+            cx="50"
+            cy="50"
+            r={RING_RADIUS}
+            fill="none"
+            stroke="url(#ring-grad)"
+            strokeWidth="3.2"
+            strokeDasharray={RING_CIRCUMFERENCE}
+            strokeDashoffset={dashOffset}
+            strokeLinecap="round"
+            filter="url(#ring-glow)"
+            style={{ transition: "stroke-dashoffset 0.5s ease-out" }}
+          />
+
+          {/* Subtle inner glow */}
+          <circle
+            cx="50"
+            cy="50"
+            r={RING_RADIUS - 2.5}
+            fill="none"
+            stroke="rgba(138,138,255,0.05)"
+            strokeWidth="0.5"
+          />
+        </svg>
 
         <div className="absolute inset-0 flex items-center justify-center">
           {!t.running ? (
@@ -137,7 +187,7 @@ export function TimerPanel() {
             >
               完成
             </button>
-            <button onClick={() => t.finish("abandoned")} className="btn-danger p-4">
+            <button onClick={() => t.finish("abandoned")} className="btn-danger !px-4">
               <RotateCcw size={20} />
             </button>
           </div>

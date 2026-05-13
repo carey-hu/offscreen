@@ -8,6 +8,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { TaskSidebar } from "./components/TaskSidebar";
 import { ScreenTimePanel } from "./components/ScreenTimePanel";
 import { SessionList } from "./components/SessionList";
+import { CalendarPopover } from "./components/CalendarPopover";
 import { useSessions } from "./hooks/useSessions";
 import { useSettings } from "./hooks/useSettings";
 import { TimerProvider } from "./contexts/TimerContext";
@@ -19,6 +20,7 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [historyView, setHistoryView] = useState(false);
   const [createTaskSignal, setCreateTaskSignal] = useState(0);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   function shiftDate(days: number) {
     const next = new Date(selectedDate);
@@ -92,13 +94,26 @@ export default function App() {
                 <ChevronRight size={16} />
               </button>
             </div>
-            <button
-              onClick={() => setSelectedDate(new Date())}
-              className="grid h-10 w-10 place-items-center rounded-xl bg-[#22222b] text-gray-400 hover:text-white transition shadow-lg"
-              title="回到今天"
-            >
-              <Calendar size={20} />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setCalendarOpen((o) => !o)}
+                className={`grid h-10 w-10 place-items-center rounded-xl transition shadow-lg ${
+                  calendarOpen
+                    ? "bg-indigo-500/20 text-indigo-300"
+                    : "bg-[#22222b] text-gray-400 hover:text-white"
+                }`}
+                title="日历 · 每日专注"
+              >
+                <Calendar size={20} />
+              </button>
+              <CalendarPopover
+                open={calendarOpen}
+                sessions={sessions}
+                selectedDate={selectedDate}
+                onSelect={(d) => setSelectedDate(d)}
+                onClose={() => setCalendarOpen(false)}
+              />
+            </div>
           </div>
         </header>
 

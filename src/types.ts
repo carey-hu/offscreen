@@ -43,3 +43,12 @@ export interface UserSettings {
   theme: "system" | "light" | "dark";
   notificationEnabled: boolean;
 }
+
+export interface TaskNote {
+  id: string;
+  taskId: string;
+  date: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -1,11 +1,10 @@
-import { isSameDay, parseISO } from "date-fns";
+import { isSameDay, parseISO, subDays, format } from "date-fns";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  Line,
-  LineChart,
+  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -14,32 +13,48 @@ import {
   YAxis
 } from "recharts";
 import { FocusSession } from "../types";
-import { completedSessions, lastSevenDays, tagStats } from "../lib/stats";
+import { completedSessions, tagStats } from "../lib/stats";
+import { tagColor } from "../lib/colors";
 
 interface Props {
   sessions: FocusSession[];
   selectedDate: Date;
 }
 
-const PIE_COLORS = ["#8a8aff", "#b0b0ff", "#6666cc", "#4d4d99", "#3d3d4d", "#5a5a7a"];
-
 export function ScreenTimePanel({ sessions, selectedDate }: Props) {
   const day = sessions.filter((s) => isSameDay(parseISO(s.startTime), selectedDate));
   const dayCompleted = completedSessions(day);
   const totalMin = dayCompleted.reduce((sum, s) => sum + s.actualMinutes, 0);
 
-  // Hourly distribution for selected date
-  const hourly = Array.from({ length: 24 }).map((_, hour) => ({
-    hour: `${hour.toString().padStart(2, "0")}`,
-    minutes: 0
-  }));
+  // Unique tags in dataset for color/legend
+  const dayTags = Array.from(new Set(dayCompleted.map((s) => s.tag))).sort();
+  const allTags = Array.from(new Set(completedSessions(sessions).map((s) => s.tag))).sort();
+
+  // Hourly stacked: each bar = hour, each stack = tag
+  const hourly = Array.from({ length: 24 }).map((_, hour) => {
+    const row: Record<string, string | number> = { hour: hour.toString().padStart(2, "0") };
+    dayTags.forEach((tag) => (row[tag] = 0));
+    return row;
+  });
   dayCompleted.forEach((s) => {
     const h = parseISO(s.startTime).getHours();
-    hourly[h].minutes += s.actualMinutes;
+    hourly[h][s.tag] = (hourly[h][s.tag] as number) + s.actualMinutes;
   });
 
-  const week = lastSevenDays(sessions);
-  const tags = tagStats(sessions).slice(0, 6);
+  // Weekly stacked
+  const weekly = Array.from({ length: 7 }).map((_, i) => {
+    const date = subDays(new Date(), 6 - i);
+    const row: Record<string, string | number> = { label: format(date, "MM-dd"), _date: date.toISOString() };
+    allTags.forEach((tag) => (row[tag] = 0));
+    return row;
+  });
+  completedSessions(sessions).forEach((s) => {
+    const d = parseISO(s.startTime);
+    const row = weekly.find((w) => isSameDay(new Date(w._date as string), d));
+    if (row) row[s.tag] = (row[s.tag] as number) + s.actualMinutes;
+  });
+
+  const tags = tagStats(sessions).slice(0, 8);
 
   return (
     <div className="space-y-6">
@@ -57,12 +72,7 @@ export function ScreenTimePanel({ sessions, selectedDate }: Props) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={hourly}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" vertical={false} />
-              <XAxis
-                dataKey="hour"
-                stroke="#666"
-                tick={{ fontSize: 10 }}
-                interval={2}
-              />
+              <XAxis dataKey="hour" stroke="#666" tick={{ fontSize: 10 }} interval={2} />
               <YAxis stroke="#666" tick={{ fontSize: 10 }} />
               <Tooltip
                 contentStyle={{
@@ -71,13 +81,38 @@ export function ScreenTimePanel({ sessions, selectedDate }: Props) {
                   borderRadius: 12,
                   color: "#fff"
                 }}
-                formatter={(v: number) => [`${v}分钟`, "专注"]}
+                formatter={(v: number, name) => [`${v}分钟`, name]}
                 labelFormatter={(h) => `${h}:00`}
               />
-              <Bar dataKey="minutes" fill="#8a8aff" radius={[4, 4, 0, 0]} />
+              {dayTags.length > 0 ? (
+                dayTags.map((tag) => (
+                  <Bar
+                    key={tag}
+                    dataKey={tag}
+                    stackId="a"
+                    fill={tagColor(tag)}
+                    radius={[4, 4, 0, 0]}
+                  />
+                ))
+              ) : (
+                <Bar dataKey="_empty" fill="#22222b" />
+              )}
             </BarChart>
           </ResponsiveContainer>
         </div>
+        {dayTags.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-3">
+            {dayTags.map((tag) => (
+              <div key={tag} className="flex items-center gap-2">
+                <span
+                  className="h-3 w-3 rounded-sm"
+                  style={{ background: tagColor(tag) }}
+                />
+                <span className="text-[11px] font-bold text-gray-400">{tag}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -90,7 +125,7 @@ export function ScreenTimePanel({ sessions, selectedDate }: Props) {
           </div>
           <div className="h-48 mt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={week}>
+              <BarChart data={weekly}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" vertical={false} />
                 <XAxis dataKey="label" stroke="#666" tick={{ fontSize: 10 }} />
                 <YAxis stroke="#666" tick={{ fontSize: 10 }} />
@@ -101,15 +136,22 @@ export function ScreenTimePanel({ sessions, selectedDate }: Props) {
                     borderRadius: 12,
                     color: "#fff"
                   }}
+                  formatter={(v: number, name) => [`${v}分钟`, name]}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="minutes"
-                  stroke="#8a8aff"
-                  strokeWidth={3}
-                  dot={{ fill: "#8a8aff", r: 4 }}
-                />
-              </LineChart>
+                {allTags.length > 0 ? (
+                  allTags.map((tag) => (
+                    <Bar
+                      key={tag}
+                      dataKey={tag}
+                      stackId="w"
+                      fill={tagColor(tag)}
+                      radius={[4, 4, 0, 0]}
+                    />
+                  ))
+                ) : (
+                  <Bar dataKey="_empty" fill="#22222b" />
+                )}
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </section>
@@ -137,10 +179,14 @@ export function ScreenTimePanel({ sessions, selectedDate }: Props) {
                     outerRadius={70}
                     paddingAngle={2}
                   >
-                    {tags.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    {tags.map((entry) => (
+                      <Cell key={entry.tag} fill={tagColor(entry.tag)} />
                     ))}
                   </Pie>
+                  <Legend
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: 11, color: "#999" }}
+                  />
                   <Tooltip
                     contentStyle={{
                       background: "#22222b",

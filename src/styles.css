@@ -16,15 +16,15 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center gap-2 rounded-full bg-[#3d3d4d] px-10 py-4 text-base font-bold text-[#8a8aff] shadow-lg transition-transform active:scale-95 hover:bg-[#4a4a5a];
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-[#3d3d4d] px-10 py-4 text-base font-bold text-[#8a8aff] shadow-lg transition-transform active:scale-95 hover:bg-[#4a4a5a];
   }
 
   .btn-secondary {
-    @apply inline-flex items-center gap-2 rounded-full bg-[#2a2a35] px-8 py-4 text-sm font-bold text-gray-400 transition-transform active:scale-95 hover:bg-[#353545];
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-[#2a2a35] px-8 py-4 text-sm font-bold text-gray-400 transition-transform active:scale-95 hover:bg-[#353545];
   }
 
   .btn-danger {
-    @apply inline-flex items-center gap-2 rounded-full bg-red-950/40 px-8 py-4 text-sm font-bold text-red-500 transition-transform active:scale-95 hover:bg-red-900/50;
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-red-950/40 px-8 py-4 text-sm font-bold text-red-500 transition-transform active:scale-95 hover:bg-red-900/50;
   }
 
   .settings-btn {

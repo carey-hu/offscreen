@@ -1,19 +1,11 @@
-import { FocusSession, Task, UserSettings } from "../types";
+import { FocusSession, Task, TaskNote, UserSettings } from "../types";
 
 const DB_NAME = "openfocus_db";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const SESSION_STORE = "focus_sessions";
 const SETTINGS_STORE = "settings";
 const TASK_STORE = "tasks";
-
-const DEFAULT_TASKS: Task[] = [
-  { id: "seed-1", title: "模考复盘",            icon: "🧘", description: "--", tag: "学习", plannedMinutes: 25 },
-  { id: "seed-2", title: "模考送小黄上岸",       icon: "🎓", description: "--", tag: "考试", plannedMinutes: 50 },
-  { id: "seed-3", title: "申论带来好消息",       icon: "💌", description: "--", tag: "写作", plannedMinutes: 30 },
-  { id: "seed-4", title: "数量",                icon: "💯", description: "--", tag: "练习", plannedMinutes: 25 },
-  { id: "seed-5", title: "fulltime 认知·思维",   icon: "❤️", description: "--", tag: "工作", plannedMinutes: 50 },
-  { id: "seed-6", title: "full time 注册会计",   icon: "🍦", description: "--", tag: "专业", plannedMinutes: 50 }
-];
+const TASK_NOTE_STORE = "task_notes";
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -21,6 +13,7 @@ function openDb(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = (event) => {
       const db = request.result;
+      const upgradeTx = request.transaction;
       const oldVersion = event.oldVersion;
 
       if (!db.objectStoreNames.contains(SESSION_STORE)) {
@@ -37,9 +30,25 @@ function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(TASK_STORE)) {
         const store = db.createObjectStore(TASK_STORE, { keyPath: "id" });
         store.createIndex("tag", "tag");
-        if (oldVersion < 2) {
-          DEFAULT_TASKS.forEach((task) => store.add(task));
-        }
+      }
+
+      if (!db.objectStoreNames.contains(TASK_NOTE_STORE)) {
+        const store = db.createObjectStore(TASK_NOTE_STORE, { keyPath: "id" });
+        store.createIndex("taskId", "taskId");
+        store.createIndex("date", "date");
+      }
+
+      // v3: clear previously seeded default tasks
+      if (oldVersion < 3 && upgradeTx && db.objectStoreNames.contains(TASK_STORE)) {
+        const store = upgradeTx.objectStore(TASK_STORE);
+        const cursorReq = store.openCursor();
+        cursorReq.onsuccess = () => {
+          const cursor = cursorReq.result;
+          if (!cursor) return;
+          const id = String(cursor.primaryKey);
+          if (id.startsWith("seed-")) cursor.delete();
+          cursor.continue();
+        };
       }
     };
 
@@ -121,4 +130,20 @@ export async function getTasks(): Promise<Task[]> {
 
 export async function deleteTask(id: string): Promise<void> {
   await tx(TASK_STORE, "readwrite", (store) => store.delete(id));
+}
+
+export async function saveTaskNote(note: TaskNote): Promise<void> {
+  await tx(TASK_NOTE_STORE, "readwrite", (store) => store.put(note));
+}
+
+export async function getTaskNotes(taskId: string): Promise<TaskNote[]> {
+  const result = await tx<TaskNote[]>(TASK_NOTE_STORE, "readonly", (store) => {
+    const index = store.index("taskId");
+    return index.getAll(taskId);
+  });
+  return (result ?? []).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function deleteTaskNote(id: string): Promise<void> {
+  await tx(TASK_NOTE_STORE, "readwrite", (store) => store.delete(id));
 }
