@@ -32,6 +32,7 @@ export interface Task {
   icon: string;
   description: string;
   tag: string;
+  plannedMinutes?: number;
 }
 
 export interface UserSettings {
