@@ -225,7 +225,6 @@ export default function App() {
               onUpsertTask={upsertTask}
               onRemoveTask={removeTask}
               openCreateSignal={createTaskSignal}
-              onConsumedCreateSignal={() => {}}
             />
           </div>
         )}

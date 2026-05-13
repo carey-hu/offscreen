@@ -1,5 +1,5 @@
 import { Info, Pencil, Play, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Task } from "../types";
 import { useTimer } from "../contexts/TimerContext";
 import { TaskModal } from "./TaskModal";
@@ -11,7 +11,6 @@ interface Props {
   onUpsertTask: (task: Task) => Promise<void> | void;
   onRemoveTask: (id: string) => Promise<void> | void;
   openCreateSignal?: number;
-  onConsumedCreateSignal?: () => void;
 }
 
 export function TaskSidebar({
@@ -19,21 +18,21 @@ export function TaskSidebar({
   onUpsertTask,
   onRemoveTask,
   openCreateSignal,
-  onConsumedCreateSignal
 }: Props) {
   const timer = useTimer();
 
   const [editing, setEditing] = useState<Task | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [detailTask, setDetailTask] = useState<Task | null>(null);
+  const lastSignal = useRef(0);
 
   useEffect(() => {
-    if (openCreateSignal) {
+    if (openCreateSignal && openCreateSignal !== lastSignal.current) {
+      lastSignal.current = openCreateSignal;
       setEditing(null);
       setModalOpen(true);
-      onConsumedCreateSignal?.();
     }
-  }, [openCreateSignal, onConsumedCreateSignal]);
+  }, [openCreateSignal]);
 
   function startTask(task: Task) {
     timer.start({
