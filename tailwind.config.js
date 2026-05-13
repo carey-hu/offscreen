@@ -16,23 +16,11 @@ export default {
         primary: "var(--text-primary)",
         secondary: "var(--text-secondary)",
         muted: "var(--text-muted)",
-        faint: "var(--text-faint)"
-      },
-      textColor: {
-        primary: "var(--text-primary)",
-        secondary: "var(--text-secondary)",
-        muted: "var(--text-muted)",
-        faint: "var(--text-faint)"
-      },
-      backgroundColor: {
-        base: "var(--bg-base)",
-        card: "var(--bg-card)",
-        surface: "var(--bg-surface)",
-        "surface-hover": "var(--bg-surface-hover)",
-        "surface-active": "var(--bg-surface-active)"
-      },
-      borderColor: {
+        faint: "var(--text-faint)",
         subtle: "var(--border-subtle)"
+      },
+      boxShadow: {
+        soft: "var(--shadow-card)"
       }
     }
   },

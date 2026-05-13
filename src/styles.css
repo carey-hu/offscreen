@@ -9,39 +9,41 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Light theme (default) */
-  --bg-base: #f4f4f7;
+  /* Light theme — Apple-style: subtle off-white page, white cards with hairline border */
+  --bg-base: #fafafb;
   --bg-card: #ffffff;
-  --bg-surface: #ececef;
-  --bg-surface-hover: #dfdfe3;
-  --bg-surface-active: #d2d2d8;
+  --bg-surface: #f0f0f3;
+  --bg-surface-hover: #e5e5ea;
+  --bg-surface-active: #d8d8dd;
 
-  --text-primary: #18181b;
-  --text-secondary: #52525b;
-  --text-muted: #71717a;
-  --text-faint: #a1a1aa;
+  --text-primary: #1c1c1e;
+  --text-secondary: #3a3a3c;
+  --text-muted: #6e6e73;
+  --text-faint: #aeaeb2;
 
-  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-subtle: rgba(0, 0, 0, 0.06);
   --grid-stroke: rgba(0, 0, 0, 0.06);
-  --axis-stroke: #a1a1aa;
+  --axis-stroke: #aeaeb2;
 
   --btn-primary-bg: #6366f1;
   --btn-primary-text: #ffffff;
   --btn-primary-hover: #4f46e5;
 
-  --btn-secondary-bg: #ececef;
-  --btn-secondary-text: #52525b;
-  --btn-secondary-hover: #dfdfe3;
+  --btn-secondary-bg: #f0f0f3;
+  --btn-secondary-text: #3a3a3c;
+  --btn-secondary-hover: #e5e5ea;
 
   --btn-danger-bg: #fee2e2;
   --btn-danger-text: #dc2626;
   --btn-danger-hover: #fecaca;
 
-  --pill-bg: #ececef;
-  --pill-text: #71717a;
-  --pill-hover: #dfdfe3;
-  --pill-active-bg: #d2d2d8;
-  --pill-active-text: #18181b;
+  --pill-bg: #f0f0f3;
+  --pill-text: #6e6e73;
+  --pill-hover: #e5e5ea;
+  --pill-active-bg: #1c1c1e;
+  --pill-active-text: #ffffff;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 :root.dark {
@@ -79,22 +81,32 @@
   --pill-hover: #353545;
   --pill-active-bg: #3d3d4d;
   --pill-active-text: #e5e7eb;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-html, body {
+html {
   background: var(--bg-base);
-  color: var(--text-primary);
 }
 
 body {
   margin: 0;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  background: var(--bg-base);
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-10 py-4 text-base font-bold shadow-lg transition-transform active:scale-95;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-10 py-4 text-base font-bold transition-transform active:scale-95;
     background: var(--btn-primary-bg);
     color: var(--btn-primary-text);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
   }
   .btn-primary:hover {
     background: var(--btn-primary-hover);
@@ -120,7 +132,7 @@ body {
 
   .settings-btn {
     @apply flex items-center gap-3 rounded-[1.5rem] px-5 py-4 text-left text-sm font-semibold transition;
-    background: var(--bg-card);
+    background: var(--bg-surface);
     color: var(--text-secondary);
   }
   .settings-btn:hover {
@@ -129,8 +141,14 @@ body {
   }
 
   .offscreen-card {
-    @apply rounded-[2rem] p-6 shadow-xl;
+    @apply rounded-[2rem] p-6;
     background: var(--bg-card);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-subtle);
+  }
+
+  :root.dark .offscreen-card {
+    border-color: transparent;
   }
 
   .pill-button {
@@ -149,7 +167,6 @@ body {
   }
 }
 
-/* Custom Scrollbar for Wheel Picker */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

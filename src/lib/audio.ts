@@ -4,6 +4,7 @@ type AudioStatus = {
   isPlaying: boolean;
   currentTrackId: string | null;
   volume: number;
+  source: "audio" | "procedural" | "none";
 };
 
 type NoiseColor = "white" | "pink" | "brown";
@@ -22,7 +23,6 @@ function createNoiseBuffer(
       data[i] = Math.random() * 2 - 1;
     }
   } else if (color === "pink") {
-    // Voss-McCartney approximation
     let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
     for (let i = 0; i < length; i++) {
       const white = Math.random() * 2 - 1;
@@ -32,23 +32,23 @@ function createNoiseBuffer(
       b3 = 0.8665 * b3 + white * 0.3104856;
       b4 = 0.55 * b4 + white * 0.5329522;
       b5 = -0.7616 * b5 - white * 0.016898;
-      data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+      data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.18;
       b6 = white * 0.115926;
     }
   } else {
-    // brown — integrated white
+    // brown — integrated white, normalized to ~±0.6
     let lastOut = 0;
     for (let i = 0; i < length; i++) {
       const white = Math.random() * 2 - 1;
       lastOut = (lastOut + 0.02 * white) / 1.02;
-      data[i] = lastOut * 3.5;
+      data[i] = lastOut * 1.6;
     }
   }
 
   return buffer;
 }
 
-interface TrackRecipe {
+interface ProceduralRecipe {
   color: NoiseColor;
   filterType?: BiquadFilterType;
   filterFreq?: number;
@@ -56,38 +56,103 @@ interface TrackRecipe {
   gain: number;
 }
 
-const RECIPES: Record<string, TrackRecipe> = {
-  rain:   { color: "pink",  filterType: "highpass", filterFreq: 900,  filterQ: 0.7, gain: 0.95 },
-  forest: { color: "pink",  filterType: "bandpass", filterFreq: 600,  filterQ: 0.5, gain: 1.4 },
-  cafe:   { color: "brown",                                                          gain: 1.0 },
-  fire:   { color: "pink",  filterType: "lowpass",  filterFreq: 700,  filterQ: 0.7, gain: 1.6 }
+const PROCEDURAL: Record<string, ProceduralRecipe> = {
+  rain:   { color: "pink",  filterType: "highpass", filterFreq: 900,  filterQ: 0.7, gain: 1.4 },
+  forest: { color: "pink",  filterType: "bandpass", filterFreq: 600,  filterQ: 0.5, gain: 1.6 },
+  cafe:   { color: "brown",                                                          gain: 1.4 },
+  fire:   { color: "pink",  filterType: "lowpass",  filterFreq: 700,  filterQ: 0.7, gain: 1.8 }
 };
+
+// Public CDN ambient loops — free, no auth. If any 404, procedural fallback kicks in.
+const REMOTE_URLS: Record<string, string[]> = {
+  rain: [
+    "/sounds/rain.mp3",
+    "https://cdn.pixabay.com/audio/2022/03/15/audio_c8a3e16f23.mp3",
+    "https://assets.mixkit.co/active_storage/sfx/2515/2515-preview.mp3"
+  ],
+  forest: [
+    "/sounds/forest.mp3",
+    "https://cdn.pixabay.com/audio/2022/03/15/audio_1808fbf07a.mp3",
+    "https://assets.mixkit.co/active_storage/sfx/1248/1248-preview.mp3"
+  ],
+  cafe: [
+    "/sounds/cafe.mp3",
+    "https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3",
+    "https://assets.mixkit.co/active_storage/sfx/2434/2434-preview.mp3"
+  ],
+  fire: [
+    "/sounds/fire.mp3",
+    "https://cdn.pixabay.com/audio/2022/03/15/audio_2c30b3a14a.mp3",
+    "https://assets.mixkit.co/active_storage/sfx/2520/2520-preview.mp3"
+  ]
+};
+
+function tryLoadAudio(url: string, timeoutMs = 4000): Promise<HTMLAudioElement> {
+  return new Promise((resolve, reject) => {
+    const audio = new Audio();
+    audio.crossOrigin = "anonymous";
+    audio.preload = "auto";
+    audio.loop = true;
+
+    let settled = false;
+    const cleanup = () => {
+      audio.removeEventListener("canplaythrough", onReady);
+      audio.removeEventListener("loadedmetadata", onReady);
+      audio.removeEventListener("error", onErr);
+    };
+    const onReady = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(audio);
+    };
+    const onErr = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error("load failed"));
+    };
+
+    audio.addEventListener("canplaythrough", onReady);
+    audio.addEventListener("loadedmetadata", onReady);
+    audio.addEventListener("error", onErr);
+
+    audio.src = url;
+    audio.load();
+
+    setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        cleanup();
+        reject(new Error("timeout"));
+      }
+    }, timeoutMs);
+  });
+}
 
 class AudioController {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
-  private activeNodes: AudioNode[] = [];
+  private procNodes: AudioNode[] = [];
+  private htmlAudio: HTMLAudioElement | null = null;
+
   private currentTrackId: string | null = null;
   private isPlayingFlag = false;
+  private source: AudioStatus["source"] = "none";
   private listeners: ((s: AudioStatus) => void)[] = [];
   private volume = 0.5;
+  private loadingTrackId: string | null = null;
 
   private ensureCtx(): AudioContext {
     if (!this.ctx) {
-      const Ctor =
-        (window.AudioContext || (window as any).webkitAudioContext) as
-          | typeof AudioContext
-          | undefined;
-      if (!Ctor) {
-        throw new Error("Web Audio API not supported");
-      }
+      const Ctor = (window.AudioContext || (window as any).webkitAudioContext) as
+        | typeof AudioContext
+        | undefined;
+      if (!Ctor) throw new Error("Web Audio API not supported");
       this.ctx = new Ctor();
       this.masterGain = this.ctx.createGain();
       this.masterGain.gain.value = this.volume;
       this.masterGain.connect(this.ctx.destination);
-    }
-    if (this.ctx.state === "suspended") {
-      this.ctx.resume().catch(() => {});
     }
     return this.ctx;
   }
@@ -108,89 +173,135 @@ class AudioController {
     return {
       isPlaying: this.isPlayingFlag,
       currentTrackId: this.currentTrackId,
-      volume: this.volume
+      volume: this.volume,
+      source: this.source
     };
   }
 
-  play(track: WhiteNoiseTrack) {
-    try {
-      // Toggle off if same track is playing
-      if (this.currentTrackId === track.id && this.isPlayingFlag) {
-        this.pause();
+  async play(track: WhiteNoiseTrack) {
+    // Toggle off if same track is already playing
+    if (this.currentTrackId === track.id && this.isPlayingFlag) {
+      this.pause();
+      return;
+    }
+
+    this.teardownAll();
+    this.loadingTrackId = track.id;
+    this.currentTrackId = track.id;
+    this.notify();
+
+    const urls = REMOTE_URLS[track.id] ?? [];
+
+    for (const url of urls) {
+      try {
+        const audio = await tryLoadAudio(url);
+        // Stale check — user may have clicked another track
+        if (this.loadingTrackId !== track.id) {
+          audio.pause();
+          return;
+        }
+        audio.volume = this.volume;
+        await audio.play();
+        this.htmlAudio = audio;
+        this.source = "audio";
+        this.isPlayingFlag = true;
+        this.loadingTrackId = null;
+        this.notify();
         return;
+      } catch {
+        // try next url
       }
+    }
 
-      this.teardownNodes();
+    // All URLs failed → fall back to procedural noise
+    try {
       const ctx = this.ensureCtx();
-      const recipe = RECIPES[track.id] ?? { color: "pink", gain: 1 };
+      if (ctx.state !== "running") {
+        await ctx.resume();
+      }
+      // Stale check
+      if (this.loadingTrackId !== track.id) return;
 
+      const recipe = PROCEDURAL[track.id] ?? { color: "pink", gain: 1.5 };
       const buffer = createNoiseBuffer(ctx, 2, recipe.color);
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.loop = true;
+      const sourceNode = ctx.createBufferSource();
+      sourceNode.buffer = buffer;
+      sourceNode.loop = true;
 
       const trackGain = ctx.createGain();
       trackGain.gain.value = recipe.gain;
 
-      let lastNode: AudioNode = source;
       if (recipe.filterType) {
         const filter = ctx.createBiquadFilter();
         filter.type = recipe.filterType;
         filter.frequency.value = recipe.filterFreq ?? 1000;
         filter.Q.value = recipe.filterQ ?? 0.7;
-        source.connect(filter);
+        sourceNode.connect(filter);
         filter.connect(trackGain);
-        this.activeNodes.push(filter);
-        lastNode = trackGain;
+        this.procNodes.push(filter);
       } else {
-        source.connect(trackGain);
-        lastNode = trackGain;
+        sourceNode.connect(trackGain);
       }
 
-      lastNode.connect(this.masterGain!);
-      source.start();
+      trackGain.connect(this.masterGain!);
+      sourceNode.start();
 
-      this.activeNodes.push(source, trackGain);
-      this.currentTrackId = track.id;
+      this.procNodes.push(sourceNode, trackGain);
+      this.source = "procedural";
       this.isPlayingFlag = true;
+      this.loadingTrackId = null;
       this.notify();
     } catch (err) {
-      console.error("Audio play failed", err);
+      console.error("Audio fallback failed", err);
+      this.source = "none";
       this.isPlayingFlag = false;
       this.currentTrackId = null;
+      this.loadingTrackId = null;
       this.notify();
     }
   }
 
   pause() {
-    this.teardownNodes();
+    this.teardownAll();
     this.isPlayingFlag = false;
+    this.source = "none";
     this.notify();
   }
 
   stop() {
-    this.teardownNodes();
+    this.teardownAll();
     this.currentTrackId = null;
     this.isPlayingFlag = false;
+    this.source = "none";
+    this.loadingTrackId = null;
     this.notify();
   }
 
   setVolume(volume: number) {
     this.volume = Math.max(0, Math.min(1, volume));
-    if (this.masterGain) {
-      this.masterGain.gain.value = this.volume;
-    }
+    if (this.masterGain) this.masterGain.gain.value = this.volume;
+    if (this.htmlAudio) this.htmlAudio.volume = this.volume;
     this.notify();
   }
 
-  private teardownNodes() {
-    this.activeNodes.forEach((node) => {
+  private teardownAll() {
+    if (this.htmlAudio) {
+      try {
+        this.htmlAudio.pause();
+        this.htmlAudio.src = "";
+        this.htmlAudio.load();
+      } catch {
+        /* ignore */
+      }
+      this.htmlAudio = null;
+    }
+    this.procNodes.forEach((node) => {
       try {
         if ("stop" in node && typeof (node as AudioBufferSourceNode).stop === "function") {
           (node as AudioBufferSourceNode).stop();
         }
       } catch {
-        /* may have already stopped */
+        /* ignore */
       }
       try {
         node.disconnect();
@@ -198,15 +309,15 @@ class AudioController {
         /* ignore */
       }
     });
-    this.activeNodes = [];
+    this.procNodes = [];
   }
 }
 
 export const audioController = new AudioController();
 
 export const WHITE_NOISE_TRACKS: WhiteNoiseTrack[] = [
-  { id: "rain",   name: "雨声",     icon: "CloudRain", url: "procedural:rain" },
-  { id: "forest", name: "森林",     icon: "Trees",     url: "procedural:forest" },
-  { id: "cafe",   name: "咖啡馆",   icon: "Coffee",    url: "procedural:cafe" },
-  { id: "fire",   name: "篝火",     icon: "Flame",     url: "procedural:fire" }
+  { id: "rain",   name: "雨声",     icon: "CloudRain", url: "" },
+  { id: "forest", name: "森林",     icon: "Trees",     url: "" },
+  { id: "cafe",   name: "咖啡馆",   icon: "Coffee",    url: "" },
+  { id: "fire",   name: "篝火",     icon: "Flame",     url: "" }
 ];

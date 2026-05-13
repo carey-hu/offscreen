@@ -52,7 +52,7 @@ export function TaskSidebar({
             setEditing(null);
             setModalOpen(true);
           }}
-          className="w-full flex items-center justify-center gap-2 rounded-[1.5rem] border-2 border-dashed border-subtle py-4 text-sm font-bold text-muted hover:text-primary transition"
+          className="w-full flex items-center justify-center gap-2 rounded-[1.5rem] border-2 border-dashed border-subtle py-4 text-sm font-bold text-muted hover:text-primary hover:border-muted transition"
         >
           <Plus size={16} />
           <span>新任务</span>
@@ -70,8 +70,8 @@ export function TaskSidebar({
           return (
             <div
               key={task.id}
-              className={`group relative flex items-center justify-between gap-3 rounded-[2rem] bg-card p-4 sm:p-5 transition-all hover:bg-surface hover:scale-[1.01] shadow-xl overflow-hidden ${
-                isActive ? "ring-2 ring-indigo-400/60" : ""
+              className={`group relative flex items-center justify-between gap-3 rounded-[2rem] bg-card p-4 sm:p-5 shadow-soft transition-transform hover:scale-[1.01] overflow-hidden ${
+                isActive ? "ring-2 ring-indigo-400/60" : "ring-1 ring-subtle"
               }`}
             >
               <span
@@ -80,7 +80,7 @@ export function TaskSidebar({
               />
               <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                 <div
-                  className="grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-full text-xl sm:text-2xl shadow-inner shrink-0"
+                  className="grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-full text-xl sm:text-2xl shrink-0"
                   style={{ background: `${accent}22` }}
                 >
                   {task.icon}
@@ -108,7 +108,7 @@ export function TaskSidebar({
               <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
                 <button
                   onClick={() => setDetailTask(task)}
-                  className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full text-muted hover:bg-surface-hover hover:text-primary transition lg:opacity-0 lg:group-hover:opacity-100"
+                  className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full text-muted hover:bg-surface hover:text-primary transition lg:opacity-0 lg:group-hover:opacity-100"
                   aria-label="详情"
                   title="详情 · 今日记录"
                 >
@@ -119,7 +119,7 @@ export function TaskSidebar({
                     setEditing(task);
                     setModalOpen(true);
                   }}
-                  className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full text-muted hover:bg-surface-hover hover:text-primary transition lg:opacity-0 lg:group-hover:opacity-100"
+                  className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full text-muted hover:bg-surface hover:text-primary transition lg:opacity-0 lg:group-hover:opacity-100"
                   aria-label="编辑"
                 >
                   <Pencil size={14} />
@@ -128,7 +128,7 @@ export function TaskSidebar({
                   onClick={() => {
                     if (confirm(`删除任务"${task.title}"?`)) onRemoveTask(task.id);
                   }}
-                  className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full text-muted hover:bg-red-500/20 hover:text-red-400 transition lg:opacity-0 lg:group-hover:opacity-100"
+                  className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full text-muted hover:bg-red-500/15 hover:text-red-500 transition lg:opacity-0 lg:group-hover:opacity-100"
                   aria-label="删除"
                 >
                   <Trash2 size={14} />
