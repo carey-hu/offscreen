@@ -187,10 +187,10 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             {/* Jar interior clip */}
             <clipPath id="jarInterior">
               <path d="
-                M 148 30
-                C 143 20, 132 14, 118 14
-                L 98 14
-                C 82 14, 72 24, 72 38
+                M 147 14
+                C 142 6, 132 2, 118 2
+                L 98 2
+                C 82 2, 72 12, 72 28
                 L 72 110
                 C 50 160, 38 220, 35 280
                 C 32 345, 38 405, 52 445
@@ -198,13 +198,27 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
                 C 212 482, 252 470, 268 445
                 C 282 405, 288 345, 285 280
                 C 282 220, 270 160, 248 110
-                L 248 38
-                C 248 24, 238 14, 222 14
-                L 202 14
-                C 188 14, 177 20, 172 30
+                L 248 28
+                C 248 12, 238 2, 222 2
+                L 202 2
+                C 188 2, 178 6, 173 14
               " />
             </clipPath>
+
+            {/* Outer jar glow — behind body, scales with star count */}
+            <radialGradient id="outerGlow" cx="50%" cy="58%" r="50%">
+              <stop offset="0%" stopColor="rgba(251,191,36,0.15)" />
+              <stop offset="50%" stopColor="rgba(251,191,36,0.05)" />
+              <stop offset="100%" stopColor="rgba(251,191,36,0)" />
+            </radialGradient>
           </defs>
+
+          {/* Outer glow ring around entire jar */}
+          <ellipse cx="160" cy="290" rx={130 + visibleStars * 2} ry={190 + visibleStars * 3}
+            fill="url(#outerGlow)"
+            opacity={Math.min(0.7, 0.08 + visibleStars * 0.025)}
+            style={{ transition: "opacity 0.8s ease" }}
+          />
 
           {/* Galaxy glow behind jar */}
           <g style={{ animation: `galaxyBreathing ${4 + total * 0.25}s ease-in-out infinite` }}>
@@ -246,21 +260,21 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
                 <path d={makeRoundedStarPath(160, 300, 26, 0)} fill="#fff8d0" filter="url(#sgSoft)" />
               </g>
             )}
-          </g>
 
-          {/* Inner bottom glow */}
-          <ellipse cx="160" cy="470" rx="100" ry="28"
-            fill="url(#innerGlow)" opacity={glow.inner.opacity}
-            style={{ transition: "opacity 0.8s ease" }}
-          />
+            {/* Inner bottom glow — clipped to jar interior */}
+            <ellipse cx="160" cy="470" rx="90" ry="24"
+              fill="url(#innerGlow)" opacity={glow.inner.opacity}
+              style={{ transition: "opacity 0.8s ease" }}
+            />
+          </g>
 
           {/* ── Wide-mouth glass jar body ── */}
           <path
             d="
-              M 148 30
-              C 143 20, 132 14, 118 14
-              L 98 14
-              C 82 14, 72 24, 72 38
+              M 147 14
+              C 142 6, 132 2, 118 2
+              L 98 2
+              C 82 2, 72 12, 72 28
               L 72 110
               C 50 160, 38 220, 35 280
               C 32 345, 38 405, 52 445
@@ -268,10 +282,10 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
               C 212 482, 252 470, 268 445
               C 282 405, 288 345, 285 280
               C 282 220, 270 160, 248 110
-              L 248 38
-              C 248 24, 238 14, 222 14
-              L 202 14
-              C 188 14, 177 20, 172 30
+              L 248 28
+              C 248 12, 238 2, 222 2
+              L 202 2
+              C 188 2, 178 6, 173 14
             "
             fill="url(#glass)"
             stroke="var(--jar-stroke)"
@@ -280,18 +294,18 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
 
           {/* Glass left highlight */}
           <path
-            d="M 48 130 C 40 190, 40 280, 46 400 L 62 395 C 56 280, 56 190, 62 138 Z"
+            d="M 48 125 C 40 190, 40 280, 46 400 L 62 395 C 56 280, 56 190, 62 133 Z"
             fill="url(#hlL)"
           />
 
           {/* Glass right edge light */}
           <path
-            d="M 272 130 C 280 190, 280 280, 274 400 L 258 395 C 264 280, 264 190, 258 138 Z"
+            d="M 272 125 C 280 190, 280 280, 274 400 L 258 395 C 264 280, 264 190, 258 133 Z"
             fill="url(#hlR)"
           />
 
-          {/* Neck rim */}
-          <ellipse cx="160" cy="30" rx="55" ry="6" fill="none" stroke="var(--jar-stroke-neck)" strokeWidth="1" />
+          {/* Neck rim — sits at top of jar opening */}
+          <ellipse cx="160" cy="14" rx="62" ry="5" fill="none" stroke="var(--jar-stroke-neck)" strokeWidth="1" />
 
           {/* Sparkle particles */}
           {Array.from({ length: 16 }, (_, i) => {
