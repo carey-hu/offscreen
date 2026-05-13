@@ -158,20 +158,6 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
               <stop offset="100%" stopColor="rgba(255,235,210,0.08)" />
             </linearGradient>
 
-            {/* Left highlight */}
-            <linearGradient id="hlL" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.45)" />
-              <stop offset="6%" stopColor="rgba(255,255,255,0.06)" />
-              <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-            </linearGradient>
-
-            {/* Right rim light */}
-            <linearGradient id="hlR" x1="100%" y1="0%" x2="0%" y2="0%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.16)" />
-              <stop offset="4%" stopColor="rgba(255,255,255,0.03)" />
-              <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-            </linearGradient>
-
             {/* Jar interior clip */}
             <clipPath id="jarInterior">
               <path d="
@@ -270,18 +256,6 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             fill="url(#glass)"
             stroke="var(--jar-stroke)"
             strokeWidth="1.5"
-          />
-
-          {/* Glass left highlight */}
-          <path
-            d="M 48 125 C 40 190, 40 280, 46 400 L 62 395 C 56 280, 56 190, 62 133 Z"
-            fill="url(#hlL)"
-          />
-
-          {/* Glass right edge light */}
-          <path
-            d="M 272 125 C 280 190, 280 280, 274 400 L 258 395 C 264 280, 264 190, 258 133 Z"
-            fill="url(#hlR)"
           />
 
           {/* Neck rim — sits at top of jar opening */}
