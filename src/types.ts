@@ -47,10 +47,18 @@ export interface TaskNote {
   updatedAt: string;
 }
 
+export interface StarPosition {
+  x: number;
+  y: number;
+  r: number;
+  rot: number;
+}
+
 export interface MoodEntry {
   id: string;
   date: string;
   content: string;
+  position?: StarPosition;
   createdAt: string;
   updatedAt: string;
 }

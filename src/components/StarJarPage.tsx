@@ -1,6 +1,7 @@
 import { format, subDays } from "date-fns";
 import { useMemo, useState } from "react";
 import { MoodEntry } from "../types";
+import { settleNewStar, getDropX, getRandomR } from "../lib/physics";
 import { MoodEntryModal } from "./MoodEntryModal";
 import { StarJarCalendar } from "./StarJarCalendar";
 import { StarJarView } from "./StarJarView";
@@ -18,17 +19,14 @@ function computeStreak(entries: MoodEntry[]): number {
   const today = format(new Date(), "yyyy-MM-dd");
   const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
 
-  // If neither today nor yesterday has entries, streak is 0
   if (!dateSet.has(today) && !dateSet.has(yesterday)) return 0;
 
   let streak = 0;
-  // Count from today backwards
   for (let i = 0; i < 365; i++) {
     const d = format(subDays(new Date(), i), "yyyy-MM-dd");
     if (dateSet.has(d)) {
       streak++;
     } else if (i === 0) {
-      // Today has no entries — streak from yesterday still counts
       continue;
     } else {
       break;
@@ -53,6 +51,40 @@ export function StarJarPage({ entries, onUpsert, onDelete }: Props) {
     [entries, modalDate]
   );
 
+  // Batch add entries (with physics positions)
+  async function handleAddMany(items: Array<{ content: string }>) {
+    const now = new Date().toISOString();
+    const existingPositions = entries
+      .filter((e) => e.position)
+      .map((e) => e.position!);
+
+    for (const item of items) {
+      const r = getRandomR();
+      const dropX = getDropX();
+      const position = settleNewStar({ x: dropX, r }, existingPositions);
+
+      const entry: MoodEntry = {
+        id: crypto.randomUUID(),
+        date: todayStr,
+        content: item.content,
+        position,
+        createdAt: now,
+        updatedAt: now
+      };
+      existingPositions.push(position);
+      await onUpsert(entry);
+    }
+  }
+
+  // Reset all entries
+  async function handleReset() {
+    // Delete in batches to avoid too many concurrent operations
+    const ids = entries.map((e) => e.id);
+    for (const id of ids) {
+      await onDelete(id);
+    }
+  }
+
   return (
     <div className="pt-4 sm:pt-8 pb-12">
       {view === "jar" ? (
@@ -61,6 +93,8 @@ export function StarJarPage({ entries, onUpsert, onDelete }: Props) {
           todayCount={todayCount}
           streak={streak}
           onViewCalendar={() => setView("calendar")}
+          onAddMany={handleAddMany}
+          onReset={handleReset}
         />
       ) : (
         <StarJarCalendar

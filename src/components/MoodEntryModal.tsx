@@ -2,8 +2,9 @@ import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { useState } from "react";
-import { MoodEntry } from "../types";
+import { MoodEntry, StarPosition } from "../types";
 import { generateMoodSummary } from "../lib/moodSummary";
+import { settleNewStar, getDropX, getRandomR } from "../lib/physics";
 
 interface Props {
   open: boolean;
@@ -44,10 +45,17 @@ export function MoodEntryModal({ open, date, entries, onClose, onUpsert, onDelet
   async function handleAdd() {
     if (!content.trim()) return;
     const now = new Date().toISOString();
+    const existingPositions: StarPosition[] = entries
+      .filter((e) => e.position)
+      .map((e) => e.position!);
+    const r = getRandomR();
+    const dropX = getDropX();
+    const position = settleNewStar({ x: dropX, r }, existingPositions);
     await onUpsert({
       id: crypto.randomUUID(),
       date,
       content: content.trim(),
+      position,
       createdAt: now,
       updatedAt: now
     });
