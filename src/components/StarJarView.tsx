@@ -220,16 +220,15 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             style={{ transition: "opacity 0.8s ease" }}
           />
 
-          {/* Galaxy glow behind jar */}
-          <g style={{ animation: `galaxyBreathing ${4 + total * 0.25}s ease-in-out infinite` }}>
-            <ellipse cx="160" cy="300" rx={glow.mid.rx + 15} ry={glow.mid.ry + 12}
-              fill="url(#gMid)" opacity={glow.mid.opacity} />
-            <ellipse cx="160" cy="300" rx={glow.core.rx + 8} ry={glow.core.ry + 6}
-              fill="url(#gCore)" opacity={glow.core.opacity} />
-          </g>
-
-          {/* Stars clipped to jar interior */}
+          {/* Stars + galaxy glow — clipped to jar interior */}
           <g clipPath="url(#jarInterior)">
+            {/* Galaxy glow behind stars */}
+            <g style={{ animation: `galaxyBreathing ${4 + total * 0.25}s ease-in-out infinite` }}>
+              <ellipse cx="160" cy="300" rx={glow.mid.rx + 15} ry={glow.mid.ry + 12}
+                fill="url(#gMid)" opacity={glow.mid.opacity} />
+              <ellipse cx="160" cy="300" rx={glow.core.rx + 8} ry={glow.core.ry + 6}
+                fill="url(#gCore)" opacity={glow.core.opacity} />
+            </g>
             {entriesWithPos.map((entry, idx) => {
               const pos = starPositions.get(entry.id);
               if (!pos) return null;
