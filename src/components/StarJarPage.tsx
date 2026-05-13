@@ -51,6 +51,27 @@ export function StarJarPage({ entries, onUpsert, onDelete }: Props) {
     [entries, modalDate]
   );
 
+  // Single entry add (with physics position)
+  async function handleAddOne(content: string) {
+    const now = new Date().toISOString();
+    const existingPositions = entries
+      .filter((e) => e.position)
+      .map((e) => e.position!);
+    const r = getRandomR();
+    const dropX = getDropX();
+    const position = settleNewStar({ x: dropX, r }, existingPositions);
+
+    const entry: MoodEntry = {
+      id: crypto.randomUUID(),
+      date: todayStr,
+      content,
+      position,
+      createdAt: now,
+      updatedAt: now
+    };
+    await onUpsert(entry);
+  }
+
   // Batch add entries (with physics positions)
   async function handleAddMany(items: Array<{ content: string }>) {
     const now = new Date().toISOString();
@@ -93,6 +114,7 @@ export function StarJarPage({ entries, onUpsert, onDelete }: Props) {
           todayCount={todayCount}
           streak={streak}
           onViewCalendar={() => setView("calendar")}
+          onAddOne={handleAddOne}
           onAddMany={handleAddMany}
           onReset={handleReset}
         />
