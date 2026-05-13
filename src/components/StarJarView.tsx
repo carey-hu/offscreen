@@ -289,7 +289,7 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
 
           {/* ── Top rim (front arc only, no back line across opening) ── */}
           <path
-            d={`M ${left} ${top} A ${(right - left) / 2} 8 0 0 0 ${right} ${top}`}
+            d={`M ${left} ${top} A ${(right - left) / 2} 8 0 0 1 ${right} ${top}`}
             fill="none"
             stroke="var(--jar-stroke)"
             strokeWidth="1.5"
