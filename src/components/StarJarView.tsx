@@ -20,7 +20,7 @@ function hasPosition(e: MoodEntry): e is MoodEntry & { position: StarPosition } 
 }
 
 const JAR_BOUNDS: JarBounds = {
-  left: 50, right: 270, bottom: 430, floor: 460, neck: 125,
+  left: 58, right: 262, bottom: 440, floor: 455, neck: 170,
   gravity: 0.5, bounce: 0.3, friction: 0.85
 };
 
@@ -144,19 +144,19 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             </filter>
 
             {/* Galaxy glow behind jar */}
-            <radialGradient id="gCore" cx="50%" cy="58%" r="35%">
+            <radialGradient id="gCore" cx="50%" cy="55%" r="35%">
               <stop offset="0%" stopColor="#fff8d6" stopOpacity="0.55" />
               <stop offset="35%" stopColor="#ffe08a" stopOpacity="0.25" />
               <stop offset="100%" stopColor="#e89840" stopOpacity="0" />
             </radialGradient>
-            <radialGradient id="gMid" cx="50%" cy="58%" r="50%">
+            <radialGradient id="gMid" cx="50%" cy="55%" r="50%">
               <stop offset="0%" stopColor="#fff0b0" stopOpacity="0.3" />
               <stop offset="55%" stopColor="#e0a060" stopOpacity="0.08" />
               <stop offset="100%" stopColor="#7060b0" stopOpacity="0" />
             </radialGradient>
 
             {/* Inner bottom glow */}
-            <radialGradient id="innerGlow" cx="50%" cy="95%" r="38%">
+            <radialGradient id="innerGlow" cx="50%" cy="93%" r="35%">
               <stop offset="0%" stopColor="#fff4c0" stopOpacity="0.45" />
               <stop offset="55%" stopColor="#e8a050" stopOpacity="0.08" />
               <stop offset="100%" stopColor="#c07030" stopOpacity="0" />
@@ -164,53 +164,49 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
 
             {/* Glass fill — very subtle */}
             <linearGradient id="glass" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.10)" />
-              <stop offset="35%" stopColor="rgba(255,255,255,0.02)" />
-              <stop offset="70%" stopColor="rgba(255,248,235,0.02)" />
-              <stop offset="100%" stopColor="rgba(255,235,210,0.06)" />
+              <stop offset="0%" stopColor="rgba(255,255,255,0.12)" />
+              <stop offset="30%" stopColor="rgba(255,255,255,0.01)" />
+              <stop offset="65%" stopColor="rgba(255,248,235,0.03)" />
+              <stop offset="100%" stopColor="rgba(255,235,210,0.08)" />
             </linearGradient>
 
             {/* Left highlight */}
             <linearGradient id="hlL" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="rgba(255,255,255,0.45)" />
-              <stop offset="8%" stopColor="rgba(255,255,255,0.08)" />
+              <stop offset="6%" stopColor="rgba(255,255,255,0.06)" />
               <stop offset="100%" stopColor="rgba(255,255,255,0)" />
             </linearGradient>
 
             {/* Right rim light */}
             <linearGradient id="hlR" x1="100%" y1="0%" x2="0%" y2="0%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
-              <stop offset="5%" stopColor="rgba(255,255,255,0.04)" />
+              <stop offset="0%" stopColor="rgba(255,255,255,0.16)" />
+              <stop offset="4%" stopColor="rgba(255,255,255,0.03)" />
               <stop offset="100%" stopColor="rgba(255,255,255,0)" />
             </linearGradient>
 
             {/* Jar interior clip */}
             <clipPath id="jarInterior">
               <path d="
-                M 142 87
-                C 136 76, 124 68, 110 68
-                L 88 68
-                C 72 68, 62 80, 62 95
-                L 62 122
-                C 38 178, 34 240, 34 280
-                C 34 375, 58 440, 102 460
-                C 130 474, 146 480, 160 480
-                C 174 480, 190 474, 218 460
-                C 262 440, 286 375, 286 280
-                C 286 240, 282 178, 258 122
-                L 258 95
-                C 258 80, 248 68, 232 68
-                L 210 68
-                C 196 68, 184 76, 178 87
+                M 147 40
+                C 142 30, 132 24, 122 24
+                L 122 165
+                C 80 180, 48 215, 42 260
+                C 38 305, 40 355, 45 400
+                C 52 445, 88 466, 160 466
+                C 232 466, 268 445, 275 400
+                C 280 355, 282 305, 278 260
+                C 272 215, 240 180, 198 165
+                L 198 24
+                C 188 24, 178 30, 173 40
               " />
             </clipPath>
           </defs>
 
           {/* Galaxy glow behind jar */}
           <g style={{ animation: `galaxyBreathing ${4 + total * 0.25}s ease-in-out infinite` }}>
-            <ellipse cx="160" cy="300" rx={glow.mid.rx + 15} ry={glow.mid.ry + 12}
+            <ellipse cx="160" cy="270" rx={glow.mid.rx + 15} ry={glow.mid.ry + 12}
               fill="url(#gMid)" opacity={glow.mid.opacity} />
-            <ellipse cx="160" cy="300" rx={glow.core.rx + 8} ry={glow.core.ry + 6}
+            <ellipse cx="160" cy="270" rx={glow.core.rx + 8} ry={glow.core.ry + 6}
               fill="url(#gCore)" opacity={glow.core.opacity} />
           </g>
 
@@ -243,60 +239,56 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             {/* Empty state */}
             {total === 0 && (
               <g opacity="0.15" style={{ animation: "galaxyBreathing 3.5s ease-in-out infinite" }}>
-                <path d={makeRoundedStarPath(160, 290, 26, 0)} fill="#fff8d0" filter="url(#sgSoft)" />
+                <path d={makeRoundedStarPath(160, 280, 26, 0)} fill="#fff8d0" filter="url(#sgSoft)" />
               </g>
             )}
           </g>
 
           {/* Inner bottom glow */}
-          <ellipse cx="160" cy="465" rx="95" ry="28"
+          <ellipse cx="160" cy="458" rx="80" ry="22"
             fill="url(#innerGlow)" opacity={glow.inner.opacity}
             style={{ transition: "opacity 0.8s ease" }}
           />
 
-          {/* ── Fat round glass jar body ── */}
+          {/* ── Drift bottle body ── */}
           <path
             d="
-              M 142 87
-              C 136 76, 124 68, 110 68
-              L 88 68
-              C 72 68, 62 80, 62 95
-              L 62 122
-              C 38 178, 34 240, 34 280
-              C 34 375, 58 440, 102 460
-              C 130 474, 146 480, 160 480
-              C 174 480, 190 474, 218 460
-              C 262 440, 286 375, 286 280
-              C 286 240, 282 178, 258 122
-              L 258 95
-              C 258 80, 248 68, 232 68
-              L 210 68
-              C 196 68, 184 76, 178 87
+              M 147 40
+              C 142 30, 132 24, 122 24
+              L 122 165
+              C 80 180, 48 215, 42 260
+              C 38 305, 40 355, 45 400
+              C 52 445, 88 466, 160 466
+              C 232 466, 268 445, 275 400
+              C 280 355, 282 305, 278 260
+              C 272 215, 240 180, 198 165
+              L 198 24
+              C 188 24, 178 30, 173 40
             "
             fill="url(#glass)"
             stroke="var(--jar-stroke)"
             strokeWidth="1.5"
           />
 
-          {/* Glass left highlight */}
+          {/* Glass left highlight — follows bottle body contour */}
           <path
-            d="M 48 128 C 40 185, 40 260, 44 330 L 60 325 C 54 260, 54 185, 62 138 Z"
+            d="M 52 175 C 46 220, 45 290, 50 380 L 66 375 C 60 290, 60 220, 66 180 Z"
             fill="url(#hlL)"
           />
 
           {/* Glass right edge light */}
           <path
-            d="M 272 128 C 280 185, 280 260, 276 330 L 260 325 C 266 260, 266 185, 258 138 Z"
+            d="M 268 175 C 274 220, 275 290, 270 380 L 254 375 C 260 290, 260 220, 254 180 Z"
             fill="url(#hlR)"
           />
 
-          {/* Neck ring */}
-          <ellipse cx="160" cy="87" rx="58" ry="7" fill="none" stroke="var(--jar-stroke-neck)" strokeWidth="1" />
+          {/* Neck rim */}
+          <ellipse cx="160" cy="40" rx="38" ry="5" fill="none" stroke="var(--jar-stroke-neck)" strokeWidth="1" />
 
           {/* Sparkle particles */}
           {Array.from({ length: 16 }, (_, i) => {
-            const sx = 38 + ((i * 71 + 37) % 244);
-            const sy = 100 + ((i * 63 + 29) % 360);
+            const sx = 40 + ((i * 71 + 37) % 240);
+            const sy = 180 + ((i * 63 + 29) % 280);
             return (
               <circle key={i} cx={sx} cy={sy} r={1 + (i % 5) * 0.5}
                 fill="#fff8d0" opacity="0"
