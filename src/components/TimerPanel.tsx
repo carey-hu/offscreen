@@ -155,17 +155,17 @@ export function TimerPanel() {
           <div className="flex gap-2 sm:gap-3">
             <button
               onClick={() => (t.paused ? t.resume() : t.pause())}
-              className="btn-secondary flex-1 !px-4 sm:!px-8"
+              className="btn-secondary flex-1 !px-4 sm:!px-6 !text-sm !py-3.5"
             >
               {t.paused ? "继续" : "暂停"}
             </button>
             <button
               onClick={() => t.finish("completed")}
-              className="btn-primary flex-1 !px-4 sm:!px-10"
+              className="btn-primary flex-1 !px-4 sm:!px-6 !text-sm !py-3.5"
             >
               完成
             </button>
-            <button onClick={() => t.finish("abandoned")} className="btn-danger !px-3 sm:!px-4">
+            <button onClick={() => t.finish("abandoned")} className="btn-danger !px-3 sm:!px-3.5 !py-3.5">
               <RotateCcw size={20} />
             </button>
           </div>

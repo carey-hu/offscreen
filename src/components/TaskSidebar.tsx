@@ -52,7 +52,7 @@ export function TaskSidebar({
             setEditing(null);
             setModalOpen(true);
           }}
-          className="w-full flex items-center justify-center gap-2 rounded-[1.5rem] border-2 border-dashed border-subtle py-4 text-sm font-bold text-muted hover:text-primary hover:border-muted transition"
+          className="w-full flex items-center justify-center gap-2 rounded-[1.5rem] border-2 border-dashed border-subtle py-4 text-sm font-bold text-secondary hover:text-primary hover:border-muted transition"
         >
           <Plus size={16} />
           <span>新任务</span>

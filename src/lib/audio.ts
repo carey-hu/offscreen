@@ -57,33 +57,34 @@ interface ProceduralRecipe {
 }
 
 const PROCEDURAL: Record<string, ProceduralRecipe> = {
-  rain:   { color: "pink",  filterType: "highpass", filterFreq: 900,  filterQ: 0.7, gain: 1.4 },
-  forest: { color: "pink",  filterType: "bandpass", filterFreq: 600,  filterQ: 0.5, gain: 1.6 },
+  rain:   { color: "pink",  filterType: "highpass", filterFreq: 1000, filterQ: 0.7, gain: 1.4 },
+  forest: { color: "pink",  filterType: "bandpass", filterFreq: 800,  filterQ: 0.5, gain: 1.5 },
   cafe:   { color: "brown",                                                          gain: 1.4 },
-  fire:   { color: "pink",  filterType: "lowpass",  filterFreq: 700,  filterQ: 0.7, gain: 1.8 }
+  fire:   { color: "white", filterType: "lowpass",  filterFreq: 2800, filterQ: 1.0, gain: 1.6 }
 };
 
-// Public CDN ambient loops — free, no auth. If any 404, procedural fallback kicks in.
+// CDN ambient loops — tried in order; if all fail (or timeout), procedural fallback.
+// Drop your own .mp3 files into /public/sounds/ for the best experience.
 const REMOTE_URLS: Record<string, string[]> = {
   rain: [
     "/sounds/rain.mp3",
-    "https://cdn.pixabay.com/audio/2022/03/15/audio_c8a3e16f23.mp3",
-    "https://assets.mixkit.co/active_storage/sfx/2515/2515-preview.mp3"
+    "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3",
+    "https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3"
   ],
   forest: [
     "/sounds/forest.mp3",
-    "https://cdn.pixabay.com/audio/2022/03/15/audio_1808fbf07a.mp3",
-    "https://assets.mixkit.co/active_storage/sfx/1248/1248-preview.mp3"
+    "https://cdn.pixabay.com/download/audio/2021/10/25/audio_d0c1b07d97.mp3",
+    "https://cdn.pixabay.com/download/audio/2022/05/16/audio_f01b83e976.mp3"
   ],
   cafe: [
     "/sounds/cafe.mp3",
-    "https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3",
-    "https://assets.mixkit.co/active_storage/sfx/2434/2434-preview.mp3"
+    "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c82dd0ab84.mp3",
+    "https://cdn.pixabay.com/download/audio/2022/03/10/audio_e54fe65ca5.mp3"
   ],
   fire: [
     "/sounds/fire.mp3",
-    "https://cdn.pixabay.com/audio/2022/03/15/audio_2c30b3a14a.mp3",
-    "https://assets.mixkit.co/active_storage/sfx/2520/2520-preview.mp3"
+    "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c42d02b4a8.mp3",
+    "https://cdn.pixabay.com/download/audio/2021/08/09/audio_a29f03b0ec.mp3"
   ]
 };
 
@@ -142,6 +143,7 @@ class AudioController {
   private listeners: ((s: AudioStatus) => void)[] = [];
   private volume = 0.5;
   private loadingTrackId: string | null = null;
+  private playToken = 0;
 
   private ensureCtx(): AudioContext {
     if (!this.ctx) {
@@ -181,11 +183,12 @@ class AudioController {
   async play(track: WhiteNoiseTrack) {
     // Toggle off if same track is already playing
     if (this.currentTrackId === track.id && this.isPlayingFlag) {
-      this.pause();
+      this.stop();
       return;
     }
 
     this.teardownAll();
+    const token = ++this.playToken;
     this.loadingTrackId = track.id;
     this.currentTrackId = track.id;
     this.notify();
@@ -195,13 +198,10 @@ class AudioController {
     for (const url of urls) {
       try {
         const audio = await tryLoadAudio(url);
-        // Stale check — user may have clicked another track
-        if (this.loadingTrackId !== track.id) {
-          audio.pause();
-          return;
-        }
+        if (this.playToken !== token) { audio.pause(); return; }
         audio.volume = this.volume;
         await audio.play();
+        if (this.playToken !== token) { audio.pause(); return; }
         this.htmlAudio = audio;
         this.source = "audio";
         this.isPlayingFlag = true;
@@ -219,8 +219,7 @@ class AudioController {
       if (ctx.state !== "running") {
         await ctx.resume();
       }
-      // Stale check
-      if (this.loadingTrackId !== track.id) return;
+      if (this.playToken !== token) return;
 
       const recipe = PROCEDURAL[track.id] ?? { color: "pink", gain: 1.5 };
       const buffer = createNoiseBuffer(ctx, 2, recipe.color);
@@ -245,6 +244,8 @@ class AudioController {
 
       trackGain.connect(this.masterGain!);
       sourceNode.start();
+
+      if (this.playToken !== token) { this.teardownAll(); return; }
 
       this.procNodes.push(sourceNode, trackGain);
       this.source = "procedural";
