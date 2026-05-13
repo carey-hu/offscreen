@@ -3,10 +3,17 @@ import { FocusMode, FocusSession, UserSettings } from "../types";
 import { getDeviceId } from "../lib/device";
 
 interface StartOverrides {
+  taskId?: string;
   title?: string;
   tag?: string;
   mode?: FocusMode;
   minutes?: number;
+}
+
+interface EnsureTaskInput {
+  title: string;
+  tag: string;
+  plannedMinutes?: number;
 }
 
 interface TimerContextValue {
@@ -18,6 +25,7 @@ interface TimerContextValue {
   running: boolean;
   paused: boolean;
   startedAt: number | null;
+  taskId: string | null;
   elapsedMs: number;
   displayMs: number;
   progress: number;
@@ -29,7 +37,7 @@ interface TimerContextValue {
   setHours: (n: number) => void;
   setMinutes: (n: number) => void;
 
-  start: (overrides?: StartOverrides) => void;
+  start: (overrides?: StartOverrides) => Promise<void>;
   pause: () => void;
   resume: () => void;
   finish: (status?: "completed" | "abandoned") => Promise<void>;
@@ -41,6 +49,7 @@ interface ProviderProps {
   children: ReactNode;
   settings: UserSettings;
   onSave: (session: FocusSession) => Promise<void>;
+  onEnsureTask: (input: EnsureTaskInput) => Promise<string>;
 }
 
 const DEFAULT_MINUTES_BY_MODE = (settings: UserSettings, mode: FocusMode): number => {
@@ -53,15 +62,13 @@ const DEFAULT_MINUTES_BY_MODE = (settings: UserSettings, mode: FocusMode): numbe
       return 30;
     case "stopwatch":
       return 0;
-    case "flip":
-      return settings.pomodoroMinutes;
   }
 };
 
-export function TimerProvider({ children, settings, onSave }: ProviderProps) {
+export function TimerProvider({ children, settings, onSave, onEnsureTask }: ProviderProps) {
   const [mode, setModeState] = useState<FocusMode>(settings.defaultMode);
-  const [title, setTitle] = useState("深度专注");
-  const [tag, setTag] = useState("工作");
+  const [title, setTitleState] = useState("深度专注");
+  const [tag, setTagState] = useState("工作");
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(settings.pomodoroMinutes);
   const [running, setRunning] = useState(false);
@@ -70,13 +77,8 @@ export function TimerProvider({ children, settings, onSave }: ProviderProps) {
   const [pausedMs, setPausedMs] = useState(0);
   const [pauseStartedAt, setPauseStartedAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
-  const [accumulatedHiddenMs, setAccumulatedHiddenMs] = useState(0);
-  const [lastHiddenAt, setLastHiddenAt] = useState<number | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(null);
-
-  // Track running for the visibility listener (avoid stale closure)
-  const stateRef = useRef({ running, paused, mode });
-  stateRef.current = { running, paused, mode };
 
   // Sync default minutes when settings change & not running
   useEffect(() => {
@@ -96,6 +98,17 @@ export function TimerProvider({ children, settings, onSave }: ProviderProps) {
     [running, settings]
   );
 
+  // User-facing setters clear the task link
+  const setTitle = useCallback((t: string) => {
+    setTitleState(t);
+    setTaskId(null);
+  }, []);
+
+  const setTag = useCallback((t: string) => {
+    setTagState(t);
+    setTaskId(null);
+  }, []);
+
   const plannedMinutes = useMemo(() => {
     if (mode === "stopwatch") return 0;
     return hours * 60 + minutes;
@@ -105,15 +118,9 @@ export function TimerProvider({ children, settings, onSave }: ProviderProps) {
 
   const elapsedMs = useMemo(() => {
     if (!startedAt) return 0;
-    if (mode === "flip") {
-      // Only count time while page is hidden
-      const currentHiddenExtra =
-        lastHiddenAt && !paused ? Math.max(0, now - lastHiddenAt) : 0;
-      return Math.max(0, accumulatedHiddenMs + currentHiddenExtra);
-    }
     const baseElapsed = now - startedAt - pausedMs;
     return Math.max(0, baseElapsed);
-  }, [now, paused, startedAt, mode, accumulatedHiddenMs, lastHiddenAt, pausedMs]);
+  }, [now, startedAt, pausedMs]);
 
   const displayMs = mode === "stopwatch" ? elapsedMs : Math.max(0, targetMs - elapsedMs);
   const progress =
@@ -128,26 +135,14 @@ export function TimerProvider({ children, settings, onSave }: ProviderProps) {
     return () => clearInterval(timer);
   }, [running]);
 
-  // Flip mode visibility listener
-  useEffect(() => {
-    function onVisibility() {
-      const s = stateRef.current;
-      if (!s.running || s.paused || s.mode !== "flip") return;
-
-      if (document.hidden) {
-        setLastHiddenAt(Date.now());
-      } else {
-        setLastHiddenAt((prev) => {
-          if (prev) {
-            setAccumulatedHiddenMs((acc) => acc + (Date.now() - prev));
-          }
-          return null;
-        });
-      }
-    }
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, []);
+  function reset() {
+    setRunning(false);
+    setPaused(false);
+    setStartedAt(null);
+    setPausedMs(0);
+    setPauseStartedAt(null);
+    sessionIdRef.current = null;
+  }
 
   const finish = useCallback(
     async (status: "completed" | "abandoned" = "completed") => {
@@ -160,6 +155,7 @@ export function TimerProvider({ children, settings, onSave }: ProviderProps) {
       await onSave({
         id: sessionIdRef.current,
         deviceId: getDeviceId(),
+        taskId: taskId ?? undefined,
         title,
         tag,
         mode,
@@ -173,19 +169,8 @@ export function TimerProvider({ children, settings, onSave }: ProviderProps) {
       });
       reset();
     },
-    [startedAt, elapsedMs, title, tag, mode, plannedMinutes, onSave]
+    [startedAt, elapsedMs, title, tag, mode, plannedMinutes, taskId, onSave]
   );
-
-  function reset() {
-    setRunning(false);
-    setPaused(false);
-    setStartedAt(null);
-    setPausedMs(0);
-    setPauseStartedAt(null);
-    setAccumulatedHiddenMs(0);
-    setLastHiddenAt(null);
-    sessionIdRef.current = null;
-  }
 
   // Auto-finish when countdown hits zero
   useEffect(() => {
@@ -196,42 +181,51 @@ export function TimerProvider({ children, settings, onSave }: ProviderProps) {
   }, [elapsedMs, mode, paused, running, targetMs, finish]);
 
   const start = useCallback(
-    (overrides?: StartOverrides) => {
-      if (overrides?.title) setTitle(overrides.title);
-      if (overrides?.tag) setTag(overrides.tag);
-
+    async (overrides?: StartOverrides) => {
+      // Resolve effective fields
+      const nextTitle = overrides?.title ?? title;
+      const nextTag = overrides?.tag ?? tag;
       const nextMode = overrides?.mode ?? mode;
-      if (overrides?.mode) setModeState(nextMode);
+      const nextMinutes =
+        overrides?.minutes != null ? overrides.minutes : hours * 60 + minutes;
 
+      // Apply state updates (direct, bypass setters so taskId stays intact)
+      if (overrides?.title) setTitleState(overrides.title);
+      if (overrides?.tag) setTagState(overrides.tag);
+      if (overrides?.mode) setModeState(nextMode);
       if (overrides?.minutes != null) {
         setHours(Math.floor(overrides.minutes / 60));
         setMinutes(overrides.minutes % 60);
       }
+
+      // Resolve / ensure task link
+      let resolvedTaskId = overrides?.taskId ?? taskId;
+      if (!resolvedTaskId) {
+        resolvedTaskId = await onEnsureTask({
+          title: nextTitle,
+          tag: nextTag,
+          plannedMinutes: nextMode === "stopwatch" ? 25 : nextMinutes || 25
+        });
+      }
+      setTaskId(resolvedTaskId);
 
       sessionIdRef.current = crypto.randomUUID();
       const startTs = Date.now();
       setStartedAt(startTs);
       setPausedMs(0);
       setPauseStartedAt(null);
-      setAccumulatedHiddenMs(0);
-      setLastHiddenAt(nextMode === "flip" && document.hidden ? startTs : null);
       setRunning(true);
       setPaused(false);
       setNow(startTs);
     },
-    [mode]
+    [mode, title, tag, hours, minutes, taskId, onEnsureTask]
   );
 
   const pause = useCallback(() => {
     if (!running || paused) return;
     setPaused(true);
     setPauseStartedAt(Date.now());
-    // In flip mode, also stop counting any hidden window
-    if (mode === "flip" && lastHiddenAt) {
-      setAccumulatedHiddenMs((acc) => acc + (Date.now() - lastHiddenAt));
-      setLastHiddenAt(null);
-    }
-  }, [running, paused, mode, lastHiddenAt]);
+  }, [running, paused]);
 
   const resume = useCallback(() => {
     if (!running || !paused) return;
@@ -240,10 +234,7 @@ export function TimerProvider({ children, settings, onSave }: ProviderProps) {
     }
     setPauseStartedAt(null);
     setPaused(false);
-    if (mode === "flip" && document.hidden) {
-      setLastHiddenAt(Date.now());
-    }
-  }, [running, paused, pauseStartedAt, mode]);
+  }, [running, paused, pauseStartedAt]);
 
   const value: TimerContextValue = {
     mode,
@@ -254,6 +245,7 @@ export function TimerProvider({ children, settings, onSave }: ProviderProps) {
     running,
     paused,
     startedAt,
+    taskId,
     elapsedMs,
     displayMs,
     progress,

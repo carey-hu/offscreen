@@ -67,7 +67,7 @@ export function CalendarPopover({ open, sessions, selectedDate, onSelect, onClos
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute right-0 top-14 z-50 w-[340px] rounded-[1.5rem] bg-[#22222b] p-5 shadow-2xl ring-1 ring-white/5">
+      <div className="absolute right-0 top-14 z-50 w-[min(340px,90vw)] rounded-[1.5rem] bg-[#22222b] p-4 sm:p-5 shadow-2xl ring-1 ring-white/5">
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={() => setCursor((c) => subMonths(c, 1))}
@@ -77,7 +77,7 @@ export function CalendarPopover({ open, sessions, selectedDate, onSelect, onClos
           </button>
           <div className="text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
-              Calendar
+              点击日期查看详情
             </p>
             <p className="mt-0.5 text-sm font-black text-white">
               {format(cursor, "yyyy年 M月", { locale: zhCN })}

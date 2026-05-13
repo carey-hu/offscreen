@@ -14,8 +14,7 @@ const MODE_LABELS: Record<FocusMode, string> = {
   pomodoro: "番茄钟",
   long: "长专注",
   countdown: "倒计时",
-  stopwatch: "正计时",
-  flip: "翻转"
+  stopwatch: "正计时"
 };
 
 export function SettingsPanel({

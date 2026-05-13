@@ -1,9 +1,10 @@
-export type FocusMode = "pomodoro" | "long" | "countdown" | "stopwatch" | "flip";
+export type FocusMode = "pomodoro" | "long" | "countdown" | "stopwatch";
 export type FocusStatus = "running" | "paused" | "completed" | "abandoned";
 
 export interface FocusSession {
   id: string;
   deviceId: string;
+  taskId?: string;
   title: string;
   tag: string;
   mode: FocusMode;

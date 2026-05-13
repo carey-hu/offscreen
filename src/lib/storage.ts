@@ -144,6 +144,14 @@ export async function getTaskNotes(taskId: string): Promise<TaskNote[]> {
   return (result ?? []).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+export async function getNotesByDate(date: string): Promise<TaskNote[]> {
+  const result = await tx<TaskNote[]>(TASK_NOTE_STORE, "readonly", (store) => {
+    const index = store.index("date");
+    return index.getAll(date);
+  });
+  return (result ?? []).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
 export async function deleteTaskNote(id: string): Promise<void> {
   await tx(TASK_NOTE_STORE, "readwrite", (store) => store.delete(id));
 }
