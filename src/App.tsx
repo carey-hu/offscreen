@@ -70,7 +70,10 @@ export default function App() {
         <header className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-8 py-4 sm:py-6">
           <div className="order-1 flex items-center gap-2 sm:gap-4">
             <button
-              onClick={() => setHistoryView((v) => !v)}
+              onClick={() => {
+                setActiveTab("focus");
+                setHistoryView((v) => !v);
+              }}
               className={`grid h-10 w-10 place-items-center rounded-xl transition shadow-lg ${
                 historyView
                   ? "bg-indigo-500/20 text-indigo-400"
@@ -81,7 +84,11 @@ export default function App() {
               <LayoutGrid size={20} />
             </button>
             <button
-              onClick={() => setCreateTaskSignal((s) => s + 1)}
+              onClick={() => {
+                setActiveTab("focus");
+                setHistoryView(false);
+                setCreateTaskSignal((s) => s + 1);
+              }}
               className="grid h-10 w-10 place-items-center rounded-xl bg-card text-muted hover:text-primary transition shadow-lg"
               title="新建任务"
             >

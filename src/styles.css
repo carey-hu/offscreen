@@ -66,17 +66,17 @@
   --grid-stroke: #2a2a35;
   --axis-stroke: #666666;
 
-  --btn-primary-bg: #3d3d4d;
-  --btn-primary-text: #a5a5ff;
-  --btn-primary-hover: #4a4a5a;
+  --btn-primary-bg: #6366f1;
+  --btn-primary-text: #ffffff;
+  --btn-primary-hover: #4f46e5;
 
   --btn-secondary-bg: #2a2a35;
   --btn-secondary-text: #9ca3af;
   --btn-secondary-hover: #353545;
 
-  --btn-danger-bg: rgba(127, 29, 29, 0.4);
-  --btn-danger-text: #ef4444;
-  --btn-danger-hover: rgba(153, 27, 27, 0.5);
+  --btn-danger-bg: rgba(185, 28, 28, 0.55);
+  --btn-danger-text: #fca5a5;
+  --btn-danger-hover: rgba(220, 38, 38, 0.65);
 
   --pill-bg: #2a2a35;
   --pill-text: #71717a;
