@@ -1,7 +1,7 @@
 import { format, subDays } from "date-fns";
 import { useMemo, useState } from "react";
 import { MoodEntry } from "../types";
-import { settleNewStar, getDropX, getRandomR, PhysicsStar } from "../lib/physics";
+import { settleNewStar, getDropX, getRandomR } from "../lib/physics";
 import { MoodEntryModal } from "./MoodEntryModal";
 import { StarJarCalendar } from "./StarJarCalendar";
 import { StarJarView } from "./StarJarView";
@@ -53,11 +53,11 @@ export function StarJarPage({ entries, onUpsert, onDelete }: Props) {
     [entries, modalDate]
   );
 
-  function getExistingPositions(): PhysicsStar[] {
+  function getExistingPositions(): { x: number; y: number; r: number }[] {
     return entries
       .filter((e) => e.position)
       .map((e) => e.position!)
-      .map((p) => ({ x: p.x, y: p.y, r: p.r, rot: p.rot }));
+      .map((p) => ({ x: p.x, y: p.y, r: p.r }));
   }
 
   async function handleAddOne(content: string) {
@@ -92,6 +92,14 @@ export function StarJarPage({ entries, onUpsert, onDelete }: Props) {
     }
   }
 
+  async function handleClearJar() {
+    // Clear only visible star positions — keep all mood records & counts intact
+    const entriesWithPos = entries.filter((e) => e.position);
+    for (const entry of entriesWithPos) {
+      await onUpsert({ ...entry, position: undefined, updatedAt: new Date().toISOString() });
+    }
+  }
+
   return (
     <div className="pt-4 sm:pt-8 pb-12">
       {view === "jar" ? (
@@ -102,6 +110,7 @@ export function StarJarPage({ entries, onUpsert, onDelete }: Props) {
           onViewCalendar={() => setView("calendar")}
           onAddOne={handleAddOne}
           onReset={handleReset}
+          onClearJar={handleClearJar}
         />
       ) : (
         <StarJarCalendar

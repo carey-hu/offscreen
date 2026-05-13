@@ -259,3 +259,31 @@ body {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 0.8; }
 }
+
+/* ── Pour-out animation ── */
+
+@keyframes pourOut {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  10% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(0.15);
+    opacity: 0;
+  }
+}
+
+@keyframes pourFlash {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
