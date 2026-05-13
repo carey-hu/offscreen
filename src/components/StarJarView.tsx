@@ -20,7 +20,7 @@ function hasPosition(e: MoodEntry): e is MoodEntry & { position: StarPosition } 
 }
 
 const JAR_BOUNDS: JarBounds = {
-  left: 48, right: 272, bottom: 340, floor: 365, neck: 120,
+  left: 50, right: 270, bottom: 430, floor: 460, neck: 125,
   gravity: 0.5, bounce: 0.3, friction: 0.85
 };
 
@@ -156,7 +156,7 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             </radialGradient>
 
             {/* Inner bottom glow */}
-            <radialGradient id="innerGlow" cx="50%" cy="88%" r="38%">
+            <radialGradient id="innerGlow" cx="50%" cy="95%" r="38%">
               <stop offset="0%" stopColor="#fff4c0" stopOpacity="0.45" />
               <stop offset="55%" stopColor="#e8a050" stopOpacity="0.08" />
               <stop offset="100%" stopColor="#c07030" stopOpacity="0" />
@@ -187,21 +187,21 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             {/* Jar interior clip */}
             <clipPath id="jarInterior">
               <path d="
-                M 140 102
-                C 137 92, 130 87, 122 87
-                L 82 87
-                C 67 87, 62 95, 62 105
-                L 62 118
-                C 40 155, 36 200, 36 275
-                C 36 355, 54 415, 92 442
-                C 118 458, 142 464, 160 464
-                C 178 464, 202 458, 228 442
-                C 266 415, 284 355, 284 275
-                C 284 200, 280 155, 258 118
-                L 258 105
-                C 258 95, 253 87, 238 87
-                L 198 87
-                C 190 87, 183 92, 180 102
+                M 142 87
+                C 136 76, 124 68, 110 68
+                L 88 68
+                C 72 68, 62 80, 62 95
+                L 62 122
+                C 38 178, 34 240, 34 280
+                C 34 375, 58 440, 102 460
+                C 130 474, 146 480, 160 480
+                C 174 480, 190 474, 218 460
+                C 262 440, 286 375, 286 280
+                C 286 240, 282 178, 258 122
+                L 258 95
+                C 258 80, 248 68, 232 68
+                L 210 68
+                C 196 68, 184 76, 178 87
               " />
             </clipPath>
           </defs>
@@ -249,7 +249,7 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
           </g>
 
           {/* Inner bottom glow */}
-          <ellipse cx="160" cy="440" rx="105" ry="32"
+          <ellipse cx="160" cy="465" rx="95" ry="28"
             fill="url(#innerGlow)" opacity={glow.inner.opacity}
             style={{ transition: "opacity 0.8s ease" }}
           />
@@ -257,21 +257,21 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
           {/* ── Fat round glass jar body ── */}
           <path
             d="
-              M 140 102
-              C 137 92, 130 87, 122 87
-              L 82 87
-              C 67 87, 62 95, 62 105
-              L 62 118
-              C 40 155, 36 200, 36 275
-              C 36 355, 54 415, 92 442
-              C 118 458, 142 464, 160 464
-              C 178 464, 202 458, 228 442
-              C 266 415, 284 355, 284 275
-              C 284 200, 280 155, 258 118
-              L 258 105
-              C 258 95, 253 87, 238 87
-              L 198 87
-              C 190 87, 183 92, 180 102
+              M 142 87
+              C 136 76, 124 68, 110 68
+              L 88 68
+              C 72 68, 62 80, 62 95
+              L 62 122
+              C 38 178, 34 240, 34 280
+              C 34 375, 58 440, 102 460
+              C 130 474, 146 480, 160 480
+              C 174 480, 190 474, 218 460
+              C 262 440, 286 375, 286 280
+              C 286 240, 282 178, 258 122
+              L 258 95
+              C 258 80, 248 68, 232 68
+              L 210 68
+              C 196 68, 184 76, 178 87
             "
             fill="url(#glass)"
             stroke="var(--jar-stroke)"
@@ -280,13 +280,13 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
 
           {/* Glass left highlight */}
           <path
-            d="M 55 125 C 46 175, 46 240, 50 310 L 66 305 C 59 240, 59 180, 67 135 Z"
+            d="M 48 128 C 40 185, 40 260, 44 330 L 60 325 C 54 260, 54 185, 62 138 Z"
             fill="url(#hlL)"
           />
 
           {/* Glass right edge light */}
           <path
-            d="M 265 125 C 274 175, 274 240, 270 310 L 254 305 C 261 240, 261 180, 253 135 Z"
+            d="M 272 128 C 280 185, 280 260, 276 330 L 260 325 C 266 260, 266 185, 258 138 Z"
             fill="url(#hlR)"
           />
 
