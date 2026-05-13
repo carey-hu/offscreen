@@ -28,31 +28,22 @@ const JAR_BOUNDS: JarBounds = {
 function computeStarLayout(entries: MoodEntry[]): Map<string, PhysicsStar> {
   const result = new Map<string, PhysicsStar>();
   const placed: PhysicsStar[] = [];
-  const sorted = [...entries].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const withPos = entries.filter(hasPosition);
+  const sorted = [...withPos].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
   for (let i = 0; i < sorted.length; i++) {
-    const entry = sorted[i];
-    if (entry.position) {
-      const p = entry.position;
-      // Remap: spread through jar volume using golden-ratio distribution
-      const phi = (1 + Math.sqrt(5)) / 2;
-      const frac = sorted.length > 1 ? ((i * phi) % 1) : 0.55;
-      const bandH = JAR_BOUNDS.floor - JAR_BOUNDS.neck - 100;
-      const baseY = JAR_BOUNDS.neck + 40 + bandH * (0.15 + frac * 0.7);
-      const jitterY = Math.sin(i * 3.1 + 0.9) * (bandH * 0.08);
-      const jitterX = Math.cos(i * 2.4 + 1.2) * 15;
-      const x = Math.min(JAR_BOUNDS.right - p.r - 10, Math.max(JAR_BOUNDS.left + p.r + 10, p.x + jitterX));
-      const y = Math.min(JAR_BOUNDS.floor - p.r, Math.max(JAR_BOUNDS.neck + 20, baseY + jitterY));
+    const p = sorted[i].position!;
+    const phi = (1 + Math.sqrt(5)) / 2;
+    const frac = sorted.length > 1 ? ((i * phi) % 1) : 0.55;
+    const bandH = JAR_BOUNDS.floor - JAR_BOUNDS.neck - 100;
+    const baseY = JAR_BOUNDS.neck + 40 + bandH * (0.05 + frac * 0.88);
+    const jitterY = Math.sin(i * 3.1 + 0.9) * (bandH * 0.14);
+    const jitterX = Math.cos(i * 2.4 + 1.2) * 18;
+    const x = Math.min(JAR_BOUNDS.right - p.r - 10, Math.max(JAR_BOUNDS.left + p.r + 10, p.x + jitterX));
+    const y = Math.min(JAR_BOUNDS.floor - p.r - 4, Math.max(JAR_BOUNDS.neck + 20, baseY + jitterY));
 
-      result.set(entry.id, { x, y, r: p.r, rot: p.rot });
-      placed.push({ x, y, r: p.r, rot: p.rot });
-    } else {
-      const r = getRandomR();
-      const dropX = getDropX(JAR_BOUNDS);
-      const pos = settleNewStar({ x: dropX, r }, placed, JAR_BOUNDS);
-      result.set(entry.id, pos);
-      placed.push(pos);
-    }
+    result.set(sorted[i].id, { x, y, r: p.r, rot: p.rot });
+    placed.push({ x, y, r: p.r, rot: p.rot });
   }
   return result;
 }
@@ -71,10 +62,10 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
   const inputRef = useRef<HTMLInputElement>(null);
 
   const todayStr = format(new Date(), "yyyy-MM-dd");
-  const total = entries.length;
+  const entriesWithPos = useMemo(() => entries.filter(hasPosition), [entries]);
+  const total = entriesWithPos.length;
   const glow = useMemo(() => computeGalaxyGlow(total), [total]);
   const starPositions = useMemo(() => computeStarLayout(entries), [entries]);
-  const entriesWithPos = useMemo(() => entries.filter(hasPosition), [entries]);
 
   // Jar outer glow radius scales with star count (0 → 40px blur)
   const jarGlowBlur = Math.min(40, 4 + total * 1.4);

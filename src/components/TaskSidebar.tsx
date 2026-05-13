@@ -58,7 +58,7 @@ export function TaskSidebar({
           return (
             <div
               key={task.id}
-              className={`group relative flex items-center justify-between gap-3 rounded-[2rem] bg-card p-4 sm:p-5 shadow-soft transition-transform hover:scale-[1.01] overflow-hidden ${
+              className={`group relative flex items-center justify-between gap-3 rounded-[2rem] bg-card p-4 sm:p-5 transition-transform hover:scale-[1.01] overflow-hidden ${
                 isActive ? "ring-2 ring-indigo-400/60" : "ring-1 ring-subtle"
               }`}
             >

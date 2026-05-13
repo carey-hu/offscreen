@@ -61,10 +61,11 @@ export function StarJarPage({ entries, onUpsert, onDelete }: Props) {
   }
 
   async function handleAddOne(content: string) {
-    // FIFO: remove oldest if at capacity
-    if (entries.length >= MAX_STARS) {
-      const oldest = [...entries].sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
-      await onDelete(oldest.id);
+    // FIFO: clear oldest star position if at capacity (keep mood record)
+    const entriesWithStar = entries.filter((e) => e.position);
+    if (entriesWithStar.length >= MAX_STARS) {
+      const oldest = [...entriesWithStar].sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
+      await onUpsert({ ...oldest, position: undefined, updatedAt: new Date().toISOString() });
     }
 
     const now = new Date().toISOString();

@@ -64,8 +64,51 @@ export default function App() {
   return (
     <TimerProvider settings={settings} onSave={upsertSession} onEnsureTask={ensureTask}>
       <main className="min-h-screen bg-page text-primary selection:bg-indigo-500/30">
-        <header className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-8 py-4 sm:py-6">
-          <div className="order-2 sm:order-3 flex items-center gap-2 sm:gap-4">
+        <header className="relative flex items-center justify-center gap-3 px-4 sm:px-8 py-4 sm:py-6">
+          <nav className="w-full sm:w-auto flex items-center justify-center bg-card p-1 rounded-2xl shadow-xl">
+            <button
+              onClick={() => setActiveTab("stats")}
+              className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
+                activeTab === "stats"
+                  ? "bg-surface-active text-primary"
+                  : "text-muted hover:text-secondary"
+              }`}
+            >
+              统计
+            </button>
+            <button
+              onClick={() => setActiveTab("focus")}
+              className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
+                activeTab === "focus"
+                  ? "bg-surface-active text-primary"
+                  : "text-muted hover:text-secondary"
+              }`}
+            >
+              专注
+            </button>
+            <button
+              onClick={() => setActiveTab("starjar")}
+              className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
+                activeTab === "starjar"
+                  ? "bg-surface-active text-primary"
+                  : "text-muted hover:text-secondary"
+              }`}
+            >
+              星星罐
+            </button>
+            <button
+              onClick={() => setActiveTab("settings")}
+              className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
+                activeTab === "settings"
+                  ? "bg-surface-active text-primary"
+                  : "text-muted hover:text-secondary"
+              }`}
+            >
+              设置
+            </button>
+          </nav>
+
+          <div className="absolute right-4 sm:right-8 flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3 bg-card px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-secondary shadow-lg">
               <button
                 onClick={() => shiftDate(-1)}
@@ -110,49 +153,6 @@ export default function App() {
               />
             </div>
           </div>
-
-          <nav className="order-3 sm:order-2 w-full sm:w-auto flex items-center justify-center bg-card p-1 rounded-2xl shadow-xl">
-            <button
-              onClick={() => setActiveTab("stats")}
-              className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
-                activeTab === "stats"
-                  ? "bg-surface-active text-primary"
-                  : "text-muted hover:text-secondary"
-              }`}
-            >
-              统计
-            </button>
-            <button
-              onClick={() => setActiveTab("focus")}
-              className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
-                activeTab === "focus"
-                  ? "bg-surface-active text-primary"
-                  : "text-muted hover:text-secondary"
-              }`}
-            >
-              专注
-            </button>
-            <button
-              onClick={() => setActiveTab("starjar")}
-              className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
-                activeTab === "starjar"
-                  ? "bg-surface-active text-primary"
-                  : "text-muted hover:text-secondary"
-              }`}
-            >
-              星星罐
-            </button>
-            <button
-              onClick={() => setActiveTab("settings")}
-              className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
-                activeTab === "settings"
-                  ? "bg-surface-active text-primary"
-                  : "text-muted hover:text-secondary"
-              }`}
-            >
-              设置
-            </button>
-          </nav>
         </header>
 
         {activeTab === "starjar" ? (
