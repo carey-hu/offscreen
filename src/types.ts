@@ -15,6 +15,7 @@ export interface FocusSession {
   status: FocusStatus;
   focusScore?: number;
   whiteNoiseId?: string;
+  note?: string;
   createdAt: string;
   updatedAt: string;
   syncedAt?: string;

@@ -17,9 +17,11 @@ interface Props {
   sessions: FocusSession[];
   selectedDate?: Date;
   summaryOnly?: boolean;
+  onOpenFocusStats?: () => void;
+  onOpenSessionHistory?: () => void;
 }
 
-export function StatsPanel({ sessions, selectedDate, summaryOnly }: Props) {
+export function StatsPanel({ sessions, selectedDate, summaryOnly, onOpenFocusStats, onOpenSessionHistory }: Props) {
   // Summary cards always reflect TODAY regardless of the navigated date
   const todayRef = new Date();
   const todaySess = sessions.filter((s) => isSameDay(parseISO(s.startTime), todayRef));
@@ -38,7 +40,10 @@ export function StatsPanel({ sessions, selectedDate, summaryOnly }: Props) {
   if (summaryOnly) {
     return (
       <div className="grid grid-cols-3 gap-3 sm:gap-6">
-        <div className="offscreen-card relative overflow-hidden h-40 sm:h-44">
+        <button
+          onClick={onOpenFocusStats}
+          className="offscreen-card relative overflow-hidden h-40 sm:h-44 w-full text-left cursor-pointer hover:scale-[1.02] transition-transform"
+        >
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted mb-2">
             专注时长
           </p>
@@ -65,9 +70,12 @@ export function StatsPanel({ sessions, selectedDate, summaryOnly }: Props) {
           <div className="absolute -bottom-4 -right-4 h-20 w-20 sm:h-24 sm:w-24 opacity-20 text-indigo-400 rotate-12">
             <LotusIcon />
           </div>
-        </div>
+        </button>
 
-        <div className="offscreen-card relative overflow-hidden h-40 sm:h-44">
+        <button
+          onClick={onOpenSessionHistory}
+          className="offscreen-card relative overflow-hidden h-40 sm:h-44 w-full text-left cursor-pointer hover:scale-[1.02] transition-transform"
+        >
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted mb-2">
             最新动态
           </p>
@@ -97,7 +105,7 @@ export function StatsPanel({ sessions, selectedDate, summaryOnly }: Props) {
               <div className="absolute top-1/2 left-1/2 h-1/2 w-1 bg-indigo-400/50 -translate-x-1/2 -translate-y-full rounded-full origin-bottom rotate-45" />
             </div>
           </div>
-        </div>
+        </button>
 
         <div className="offscreen-card relative overflow-hidden h-40 sm:h-44">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted mb-2">

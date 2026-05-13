@@ -10,6 +10,8 @@ import { ScreenTimePanel } from "./components/ScreenTimePanel";
 import { SessionList } from "./components/SessionList";
 import { CalendarPopover } from "./components/CalendarPopover";
 import { DayDetailModal } from "./components/DayDetailModal";
+import { FocusStatsModal } from "./components/FocusStatsModal";
+import { SessionHistoryModal } from "./components/SessionHistoryModal";
 import { useSessions } from "./hooks/useSessions";
 import { useSettings } from "./hooks/useSettings";
 import { useTasks } from "./hooks/useTasks";
@@ -27,6 +29,8 @@ export default function App() {
   const [createTaskSignal, setCreateTaskSignal] = useState(0);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [detailDate, setDetailDate] = useState<Date | null>(null);
+  const [focusStatsOpen, setFocusStatsOpen] = useState(false);
+  const [sessionHistoryOpen, setSessionHistoryOpen] = useState(false);
 
   useThemeApplier(settings.theme);
 
@@ -170,7 +174,13 @@ export default function App() {
               ) : (
                 <>
                   <TimerPanel />
-                  <StatsPanel sessions={sessions} selectedDate={selectedDate} summaryOnly />
+                  <StatsPanel
+                    sessions={sessions}
+                    selectedDate={selectedDate}
+                    summaryOnly
+                    onOpenFocusStats={() => setFocusStatsOpen(true)}
+                    onOpenSessionHistory={() => setSessionHistoryOpen(true)}
+                  />
                 </>
               )
             ) : activeTab === "settings" ? (
@@ -201,6 +211,20 @@ export default function App() {
           sessions={sessions}
           tasks={tasks}
           onClose={() => setDetailDate(null)}
+        />
+
+        <FocusStatsModal
+          open={focusStatsOpen}
+          date={selectedDate}
+          sessions={sessions}
+          onClose={() => setFocusStatsOpen(false)}
+        />
+
+        <SessionHistoryModal
+          open={sessionHistoryOpen}
+          sessions={sessions}
+          onClose={() => setSessionHistoryOpen(false)}
+          onSaveSession={upsertSession}
         />
       </main>
     </TimerProvider>

@@ -23,6 +23,7 @@ interface Group {
   totalMinutes: number;
   sessionCount: number;
   notes: TaskNote[];
+  sessionNotes: { title: string; actualMinutes: number; note: string; startTime: string }[];
 }
 
 export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) {
@@ -50,6 +51,14 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
     if (existing) {
       if (s.status === "completed") existing.totalMinutes += s.actualMinutes;
       existing.sessionCount += 1;
+      if (s.note) {
+        existing.sessionNotes.push({
+          title: s.title,
+          actualMinutes: s.actualMinutes,
+          note: s.note,
+          startTime: s.startTime
+        });
+      }
     } else {
       groups.set(key, {
         key,
@@ -59,7 +68,10 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
         icon: task?.icon ?? "🎯",
         totalMinutes: s.status === "completed" ? s.actualMinutes : 0,
         sessionCount: 1,
-        notes: []
+        notes: [],
+        sessionNotes: s.note
+          ? [{ title: s.title, actualMinutes: s.actualMinutes, note: s.note, startTime: s.startTime }]
+          : []
       });
     }
   });
@@ -79,7 +91,8 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
           icon: task.icon,
           totalMinutes: 0,
           sessionCount: 0,
-          notes: [n]
+          notes: [n],
+          sessionNotes: []
         });
       }
     }
@@ -161,12 +174,27 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
                       <p className="mt-1 text-[11px] font-bold text-muted uppercase tracking-wider">
                         {g.totalMinutes > 0
                           ? `${g.totalMinutes} 分钟 · ${g.sessionCount} 次`
-                          : g.notes.length > 0
+                          : g.notes.length > 0 || g.sessionNotes.length > 0
                           ? "仅备注"
                           : `${g.sessionCount} 次`}
                       </p>
                     </div>
                   </div>
+
+                  {g.sessionNotes.length > 0 && (
+                    <div className="space-y-2 mt-3 pl-2 border-l-2 border-indigo-400/30">
+                      {g.sessionNotes.map((sn, i) => (
+                        <div key={i} className="pl-3">
+                          <p className="text-[10px] font-black uppercase tracking-wider text-indigo-400/70 mb-0.5">
+                            {sn.title} · {sn.actualMinutes}m
+                          </p>
+                          <p className="text-sm leading-relaxed text-secondary whitespace-pre-wrap break-words">
+                            {sn.note}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {g.notes.length > 0 ? (
                     <div className="space-y-2 mt-3 pl-2 border-l-2 border-subtle">
@@ -179,7 +207,9 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
                         </p>
                       ))}
                     </div>
-                  ) : (
+                  ) : null}
+
+                  {g.notes.length === 0 && g.sessionNotes.length === 0 && (
                     <p className="mt-2 pl-2 text-xs text-faint italic">暂无备注</p>
                   )}
                 </div>
