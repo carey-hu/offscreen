@@ -144,7 +144,8 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
     C ${right - cornerR * 0.7} ${floor}, ${right} ${bottom + cornerR}, ${right} ${bottom}
     L ${right} ${top}
   `;
-  const cylinderClipPath = cylinderPath + " Z";
+  const cylinderClipPath = cylinderPath + " Z";   // closed — for clipPath
+  const cylinderBodyPath = cylinderPath;           // open at top — for visible stroke (rim ellipse closes it)
 
   return (
     <div className="flex flex-col items-center">
@@ -279,20 +280,22 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             />
           </g>
 
-          {/* ── Cylinder glass body ── */}
+          {/* ── Cylinder glass body (open at top, rim ellipse closes it) ── */}
           <path
-            d={cylinderClipPath}
+            d={cylinderBodyPath}
             fill="url(#glass)"
             stroke="var(--jar-stroke)"
             strokeWidth="1.5"
           />
 
-          {/* ── Top rim (front arc only, no back line across opening) ── */}
-          <path
-            d={`M ${left} ${top} A ${(right - left) / 2} 8 0 0 1 ${right} ${top}`}
+          {/* ── Top rim (full ellipse, both front + back arcs visible through glass) ── */}
+          <ellipse cx="160" cy={top} rx={(right - left) / 2} ry="8"
             fill="none"
             stroke="var(--jar-stroke)"
             strokeWidth="1.5"
+          />
+          <ellipse cx="160" cy={top} rx={(right - left) / 2} ry="7"
+            fill="rgba(255,255,255,0.05)"
           />
 
           {/* Sparkle particles */}
