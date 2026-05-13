@@ -1,7 +1,7 @@
 import { format, subDays } from "date-fns";
 import { useMemo, useState } from "react";
 import { MoodEntry } from "../types";
-import { settleNewStar, getDropX, getRandomR } from "../lib/physics";
+import { settleNewStar, getDropX, getRandomR, PhysicsStar } from "../lib/physics";
 import { MoodEntryModal } from "./MoodEntryModal";
 import { StarJarCalendar } from "./StarJarCalendar";
 import { StarJarView } from "./StarJarView";
@@ -11,6 +11,8 @@ interface Props {
   onUpsert: (entry: MoodEntry) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
+
+const MAX_STARS = 30;
 
 function computeStreak(entries: MoodEntry[]): number {
   const dateSet = new Set<string>();
@@ -51,15 +53,25 @@ export function StarJarPage({ entries, onUpsert, onDelete }: Props) {
     [entries, modalDate]
   );
 
-  // Single entry add (with physics position)
-  async function handleAddOne(content: string) {
-    const now = new Date().toISOString();
-    const existingPositions = entries
+  function getExistingPositions(): PhysicsStar[] {
+    return entries
       .filter((e) => e.position)
-      .map((e) => e.position!);
+      .map((e) => e.position!)
+      .map((p) => ({ x: p.x, y: p.y, r: p.r, rot: p.rot }));
+  }
+
+  async function handleAddOne(content: string) {
+    // FIFO: remove oldest if at capacity
+    if (entries.length >= MAX_STARS) {
+      const oldest = [...entries].sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
+      await onDelete(oldest.id);
+    }
+
+    const now = new Date().toISOString();
+    const existing = getExistingPositions();
     const r = getRandomR();
     const dropX = getDropX();
-    const position = settleNewStar({ x: dropX, r }, existingPositions);
+    const position = settleNewStar({ x: dropX, r }, existing);
 
     const entry: MoodEntry = {
       id: crypto.randomUUID(),
@@ -72,34 +84,7 @@ export function StarJarPage({ entries, onUpsert, onDelete }: Props) {
     await onUpsert(entry);
   }
 
-  // Batch add entries (with physics positions)
-  async function handleAddMany(items: Array<{ content: string }>) {
-    const now = new Date().toISOString();
-    const existingPositions = entries
-      .filter((e) => e.position)
-      .map((e) => e.position!);
-
-    for (const item of items) {
-      const r = getRandomR();
-      const dropX = getDropX();
-      const position = settleNewStar({ x: dropX, r }, existingPositions);
-
-      const entry: MoodEntry = {
-        id: crypto.randomUUID(),
-        date: todayStr,
-        content: item.content,
-        position,
-        createdAt: now,
-        updatedAt: now
-      };
-      existingPositions.push(position);
-      await onUpsert(entry);
-    }
-  }
-
-  // Reset all entries
   async function handleReset() {
-    // Delete in batches to avoid too many concurrent operations
     const ids = entries.map((e) => e.id);
     for (const id of ids) {
       await onDelete(id);
@@ -115,7 +100,6 @@ export function StarJarPage({ entries, onUpsert, onDelete }: Props) {
           streak={streak}
           onViewCalendar={() => setView("calendar")}
           onAddOne={handleAddOne}
-          onAddMany={handleAddMany}
           onReset={handleReset}
         />
       ) : (

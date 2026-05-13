@@ -144,7 +144,7 @@ export default function App() {
                   : "text-muted hover:text-secondary"
               }`}
             >
-              屏幕使用时间
+              统计
             </button>
             <button
               onClick={() => setActiveTab("focus")}
@@ -157,16 +157,6 @@ export default function App() {
               专注
             </button>
             <button
-              onClick={() => setActiveTab("settings")}
-              className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
-                activeTab === "settings"
-                  ? "bg-surface-active text-primary"
-                  : "text-muted hover:text-secondary"
-              }`}
-            >
-              设置
-            </button>
-            <button
               onClick={() => setActiveTab("starjar")}
               className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
                 activeTab === "starjar"
@@ -175,6 +165,16 @@ export default function App() {
               }`}
             >
               星星罐
+            </button>
+            <button
+              onClick={() => setActiveTab("settings")}
+              className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-[0.85rem] transition ${
+                activeTab === "settings"
+                  ? "bg-surface-active text-primary"
+                  : "text-muted hover:text-secondary"
+              }`}
+            >
+              设置
             </button>
           </nav>
         </header>

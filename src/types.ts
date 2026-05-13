@@ -50,6 +50,7 @@ export interface TaskNote {
 export interface StarPosition {
   x: number;
   y: number;
+  z?: number;
   r: number;
   rot: number;
 }

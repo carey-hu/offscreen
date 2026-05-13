@@ -186,62 +186,76 @@ body {
   --star-particle: #fde68a;
   --jar-glass: rgba(251, 191, 36, 0.08);
   --jar-rim: rgba(251, 191, 36, 0.3);
+  /* Light mode jar — darker strokes for visibility */
+  --jar-stroke: rgba(160, 110, 35, 0.28);
+  --jar-stroke-neck: rgba(160, 110, 35, 0.22);
+  --jar-hl-left: rgba(255, 255, 255, 0.45);
+  --jar-hl-right: rgba(255, 255, 255, 0.16);
+  --jar-glow-rgb: 180, 140, 80;
 }
 
 :root.dark {
   --jar-glass: rgba(251, 191, 36, 0.05);
   --jar-rim: rgba(251, 191, 36, 0.2);
+  --jar-stroke: rgba(255, 255, 255, 0.22);
+  --jar-stroke-neck: rgba(255, 255, 255, 0.18);
+  --jar-hl-left: rgba(255, 255, 255, 0.45);
+  --jar-hl-right: rgba(255, 255, 255, 0.16);
+  --jar-glow-rgb: 251, 191, 36;
 }
+
+/* ── Star Jar Animations ── */
 
 @keyframes starFloat1 {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-8px) rotate(5deg); }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
 @keyframes starFloat2 {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-12px) rotate(-4deg); }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
 }
 @keyframes starFloat3 {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-5px) rotate(8deg); }
+  0%, 100% { transform: translateY(0px); }
+  33% { transform: translateY(-7px); }
+  66% { transform: translateY(5px); }
 }
 @keyframes starFloat4 {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(-7deg); }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-18px); }
 }
 @keyframes starFloat5 {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-6px) rotate(3deg); }
+  0%, 100% { transform: translateY(0px); }
+  33% { transform: translateY(-5px); }
+  66% { transform: translateY(8px); }
 }
 
-@keyframes jarWobble {
-  0%, 100% { transform: rotate(0deg) translateY(0px); }
-  25% { transform: rotate(0.8deg) translateY(-1px); }
-  75% { transform: rotate(-0.6deg) translateY(1px); }
-}
-
-@keyframes starGlowPulse {
-  0%, 100% { filter: drop-shadow(0 0 6px var(--star-glow)); }
-  50% { filter: drop-shadow(0 0 16px var(--star-bright)) drop-shadow(0 0 24px var(--star-glow)); }
-}
-
-@keyframes sparkle {
+@keyframes sparkleParticle {
   0%, 100% { opacity: 0; transform: scale(0.3); }
-  50% { opacity: 0.8; transform: scale(1); }
+  30% { opacity: 0.9; transform: scale(1.1); }
+  60% { opacity: 0.5; transform: scale(0.8); }
 }
 
 @keyframes galaxyBreathing {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.75; }
-}
-
-@keyframes starDropIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.55; }
 }
 
 @keyframes starSettle {
-  0% { transform: translateY(-120px) scale(0.3); opacity: 0; }
-  60% { opacity: 1; }
+  0% { transform: translateY(-150px) scale(0.2); opacity: 0; }
+  50% { opacity: 1; }
+  70% { transform: translateY(6px) scale(1.04); }
+  85% { transform: translateY(-2px) scale(0.98); }
   100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes starDrop {
+  0% { transform: translateY(-100px) scale(0.1); opacity: 0; }
+  50% { opacity: 0.8; }
+  70% { transform: translateY(3px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes jarGlowPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
 }

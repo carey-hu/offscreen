@@ -2,9 +2,10 @@ import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { useState } from "react";
-import { MoodEntry, StarPosition } from "../types";
+import { MoodEntry } from "../types";
 import { generateMoodSummary } from "../lib/moodSummary";
 import { settleNewStar, getDropX, getRandomR } from "../lib/physics";
+import { StarPosition } from "../types";
 
 interface Props {
   open: boolean;
