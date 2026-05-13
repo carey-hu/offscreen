@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Plus, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { useCallback, useState } from "react";
@@ -27,7 +27,6 @@ export default function App() {
   const { entries: moodEntries, upsert: upsertMood, remove: removeMood } = useMoodEntries();
   const [activeTab, setActiveTab] = useState<"stats" | "focus" | "settings" | "starjar">("focus");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [createTaskSignal, setCreateTaskSignal] = useState(0);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [detailDate, setDetailDate] = useState<Date | null>(null);
   const [focusStatsOpen, setFocusStatsOpen] = useState(false);
@@ -66,19 +65,6 @@ export default function App() {
     <TimerProvider settings={settings} onSave={upsertSession} onEnsureTask={ensureTask}>
       <main className="min-h-screen bg-page text-primary selection:bg-indigo-500/30">
         <header className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-8 py-4 sm:py-6">
-          <div className="order-1 flex items-center gap-2 sm:gap-4">
-            <button
-              onClick={() => {
-                setActiveTab("focus");
-                setCreateTaskSignal((s) => s + 1);
-              }}
-              className="grid h-10 w-10 place-items-center rounded-xl bg-card text-muted hover:text-primary transition shadow-lg"
-              title="新建任务"
-            >
-              <Plus size={20} />
-            </button>
-          </div>
-
           <div className="order-2 sm:order-3 flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3 bg-card px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-secondary shadow-lg">
               <button
@@ -210,7 +196,6 @@ export default function App() {
               tasks={tasks}
               onUpsertTask={upsertTask}
               onRemoveTask={removeTask}
-              openCreateSignal={createTaskSignal}
             />
           </div>
         )}
