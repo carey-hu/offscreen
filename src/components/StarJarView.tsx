@@ -287,30 +287,12 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             strokeWidth="1.5"
           />
 
-          {/* ── Top rim ellipse (open jar) ── */}
-          <ellipse cx="160" cy={top} rx={(right - left) / 2} ry="8"
+          {/* ── Top rim (front arc only, no back line across opening) ── */}
+          <path
+            d={`M ${left} ${top} A ${(right - left) / 2} 8 0 0 0 ${right} ${top}`}
             fill="none"
             stroke="var(--jar-stroke)"
             strokeWidth="1.5"
-          />
-          {/* Inner rim surface */}
-          <ellipse cx="160" cy={top} rx={(right - left) / 2} ry="7"
-            fill="rgba(255,255,255,0.05)"
-          />
-
-          {/* Glass highlight — left vertical reflection */}
-          <line x1={left + 10} y1={top + 15} x2={left + 10} y2={bottom - 5}
-            stroke="var(--jar-hl-left)"
-            strokeWidth="5"
-            strokeLinecap="round"
-            opacity="0.3"
-          />
-          {/* Glass highlight — right thin reflection */}
-          <line x1={right - 14} y1={top + 25} x2={right - 14} y2={bottom - 20}
-            stroke="var(--jar-hl-right)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            opacity="0.18"
           />
 
           {/* Sparkle particles */}
