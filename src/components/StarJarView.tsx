@@ -20,7 +20,7 @@ function hasPosition(e: MoodEntry): e is MoodEntry & { position: StarPosition } 
 }
 
 const JAR_BOUNDS: JarBounds = {
-  left: 52, right: 268, bottom: 445, floor: 465, neck: 120,
+  left: 45, right: 275, bottom: 440, floor: 470, neck: 80,
   gravity: 0.5, bounce: 0.3, friction: 0.85
 };
 
@@ -158,24 +158,21 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
               <stop offset="100%" stopColor="rgba(255,235,210,0.08)" />
             </linearGradient>
 
-            {/* Jar interior clip */}
+            {/* Jar interior clip — round bottle */}
             <clipPath id="jarInterior">
               <path d="
-                M 147 14
-                C 142 6, 132 2, 118 2
-                L 98 2
-                C 82 2, 72 12, 72 28
-                L 72 110
-                C 50 160, 38 220, 35 280
-                C 32 345, 38 405, 52 445
-                C 68 470, 108 482, 160 482
-                C 212 482, 252 470, 268 445
-                C 282 405, 288 345, 285 280
-                C 282 220, 270 160, 248 110
-                L 248 28
-                C 248 12, 238 2, 222 2
-                L 202 2
-                C 188 2, 178 6, 173 14
+                M 130 72
+                C 128 110, 128 130, 126 148
+                C 90 172, 50 225, 40 290
+                C 30 355, 50 420, 80 455
+                C 110 475, 140 478, 160 478
+                C 180 478, 210 475, 240 455
+                C 270 420, 290 355, 280 290
+                C 270 225, 230 172, 194 148
+                C 192 130, 192 110, 190 72
+                C 188 60, 178 54, 160 54
+                C 142 54, 132 60, 130 72
+                Z
               " />
             </clipPath>
 
@@ -223,48 +220,69 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
             {/* Empty state */}
             {total === 0 && (
               <g opacity="0.15" style={{ animation: "galaxyBreathing 3.5s ease-in-out infinite" }}>
-                <path d={makeRoundedStarPath(160, 300, 26, 0)} fill="#fff8d0" filter="url(#sgSoft)" />
+                <path d={makeRoundedStarPath(160, 290, 26, 0)} fill="#fff8d0" filter="url(#sgSoft)" />
               </g>
             )}
 
             {/* Inner bottom glow — clipped to jar interior */}
-            <ellipse cx="160" cy="470" rx="90" ry="24"
+            <ellipse cx="160" cy="460" rx="80" ry="22"
               fill="url(#innerGlow)" opacity={glow.inner.opacity}
               style={{ transition: "opacity 0.8s ease" }}
             />
           </g>
 
-          {/* ── Wide-mouth glass jar body ── */}
+          {/* ── Round glass bottle body ── */}
           <path
             d="
-              M 147 14
-              C 142 6, 132 2, 118 2
-              L 98 2
-              C 82 2, 72 12, 72 28
-              L 72 110
-              C 50 160, 38 220, 35 280
-              C 32 345, 38 405, 52 445
-              C 68 470, 108 482, 160 482
-              C 212 482, 252 470, 268 445
-              C 282 405, 288 345, 285 280
-              C 282 220, 270 160, 248 110
-              L 248 28
-              C 248 12, 238 2, 222 2
-              L 202 2
-              C 188 2, 178 6, 173 14
+              M 130 72
+              C 128 110, 128 130, 126 148
+              C 90 172, 50 225, 40 290
+              C 30 355, 50 420, 80 455
+              C 110 475, 140 478, 160 478
+              C 180 478, 210 475, 240 455
+              C 270 420, 290 355, 280 290
+              C 270 225, 230 172, 194 148
+              C 192 130, 192 110, 190 72
+              C 188 60, 178 54, 160 54
+              C 142 54, 132 60, 130 72
+              Z
             "
             fill="url(#glass)"
             stroke="var(--jar-stroke)"
             strokeWidth="1.5"
           />
 
-          {/* Neck rim — sits at top of jar opening */}
-          <ellipse cx="160" cy="14" rx="62" ry="5" fill="none" stroke="var(--jar-stroke-neck)" strokeWidth="1" />
+          {/* ── Cork stopper ── */}
+          <path
+            d="
+              M 132 72
+              L 132 55
+              C 130 40, 128 28, 123 16
+              C 120 6, 128 2, 140 1
+              C 152 0, 168 0, 180 1
+              C 192 2, 200 6, 197 16
+              C 192 28, 190 40, 188 55
+              L 188 72
+              C 186 75, 178 77, 160 77
+              C 142 77, 134 75, 132 72
+              Z
+            "
+            fill="#c4956b"
+            stroke="#a0724a"
+            strokeWidth="0.8"
+          />
+          {/* Cork wood grain lines */}
+          <path d="M 142 68 C 150 66, 170 66, 178 68" fill="none" stroke="#a0724a" strokeWidth="0.5" opacity="0.6" />
+          <path d="M 138 58 C 148 56, 172 56, 182 58" fill="none" stroke="#a0724a" strokeWidth="0.5" opacity="0.5" />
+          <path d="M 136 48 C 146 46, 174 46, 184 48" fill="none" stroke="#a0724a" strokeWidth="0.5" opacity="0.6" />
+          <path d="M 134 38 C 144 36, 176 36, 186 38" fill="none" stroke="#a0724a" strokeWidth="0.5" opacity="0.5" />
+          <path d="M 132 28 C 144 26, 176 26, 188 28" fill="none" stroke="#a0724a" strokeWidth="0.5" opacity="0.6" />
+          <path d="M 130 18 C 140 16, 180 16, 190 18" fill="none" stroke="#a0724a" strokeWidth="0.5" opacity="0.5" />
 
           {/* Sparkle particles */}
           {Array.from({ length: 16 }, (_, i) => {
-            const sx = 38 + ((i * 71 + 37) % 248);
-            const sy = 120 + ((i * 63 + 29) % 355);
+            const sx = 48 + ((i * 71 + 37) % 224);
+            const sy = 155 + ((i * 63 + 29) % 310);
             return (
               <circle key={i} cx={sx} cy={sy} r={1 + (i % 5) * 0.5}
                 fill="#fff8d0" opacity="0"

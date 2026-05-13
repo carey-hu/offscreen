@@ -17,11 +17,11 @@ export interface JarBounds {
 }
 
 const DEFAULT_BOUNDS: JarBounds = {
-  left: 42,
-  right: 258,
-  bottom: 310,
-  floor: 314,
-  neck: 120,
+  left: 48,
+  right: 272,
+  bottom: 430,
+  floor: 465,
+  neck: 85,
   gravity: 0.55,
   bounce: 0.35,
   friction: 0.85
