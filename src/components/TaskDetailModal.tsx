@@ -77,7 +77,7 @@ export function TaskDetailModal({ open, task, onClose }: Props) {
           </button>
         </div>
 
-        <div className="rounded-2xl bg-base p-4 mb-4">
+        <div className="rounded-2xl bg-page p-4 mb-4">
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <input
               type="date"
@@ -109,7 +109,7 @@ export function TaskDetailModal({ open, task, onClose }: Props) {
 
         <div className="flex-1 overflow-y-auto no-scrollbar space-y-4">
           {dates.length === 0 ? (
-            <div className="rounded-2xl bg-base p-8 text-center text-xs font-bold uppercase tracking-widest text-faint">
+            <div className="rounded-2xl bg-page p-8 text-center text-xs font-bold uppercase tracking-widest text-faint">
               暂无记录
             </div>
           ) : (
@@ -122,7 +122,7 @@ export function TaskDetailModal({ open, task, onClose }: Props) {
                   {grouped[d].map((note) => (
                     <div
                       key={note.id}
-                      className="group flex items-start gap-3 rounded-2xl bg-base p-4"
+                      className="group flex items-start gap-3 rounded-2xl bg-page p-4"
                     >
                       <p className="flex-1 text-sm leading-relaxed text-secondary whitespace-pre-wrap break-words">
                         {note.content}

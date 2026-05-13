@@ -81,7 +81,7 @@ export function SessionHistoryModal({ open, sessions, onClose, onSaveSession }: 
                 return (
                   <div
                     key={session.id}
-                    className="rounded-2xl bg-base overflow-hidden"
+                    className="rounded-2xl bg-page overflow-hidden"
                   >
                     <button
                       onClick={() =>

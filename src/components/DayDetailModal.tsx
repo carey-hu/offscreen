@@ -148,7 +148,7 @@ export function DayDetailModal({ open, date, sessions, tasks, onClose }: Props) 
               return (
                 <div
                   key={g.key}
-                  className="relative rounded-2xl bg-base p-4 sm:p-5 overflow-hidden"
+                  className="relative rounded-2xl bg-page p-4 sm:p-5 overflow-hidden"
                 >
                   <span
                     className="absolute left-0 top-0 bottom-0 w-1"

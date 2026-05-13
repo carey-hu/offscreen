@@ -162,7 +162,7 @@ export function FocusStatsModal({ open, date, sessions, onClose }: Props) {
                   {completed.map((s) => (
                     <div
                       key={s.id}
-                      className="flex items-center justify-between rounded-2xl bg-base px-4 py-3"
+                      className="flex items-center justify-between rounded-2xl bg-page px-4 py-3"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">

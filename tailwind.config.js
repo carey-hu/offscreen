@@ -8,7 +8,7 @@ export default {
         sans: ["Inter", "ui-sans-serif", "system-ui", "Microsoft YaHei", "sans-serif"]
       },
       colors: {
-        base: "var(--bg-base)",
+        page: "var(--bg-base)",
         card: "var(--bg-card)",
         surface: "var(--bg-surface)",
         "surface-hover": "var(--bg-surface-hover)",
