@@ -241,15 +241,27 @@ export function TimerProvider({ children, settings, onSave, onEnsureTask }: Prov
 
   const pause = useCallback(() => {
     if (!running || paused) return;
+    const nowMs = Date.now();
+    // Snap `now` to the current instant so the elapsed value displayed at
+    // the moment of pause matches what was on screen the millisecond before
+    // — without this, `referenceNow` jumps from a (possibly 500ms stale)
+    // tick-driven `now` to the fresh `pauseStartedAt`, and the digits leap
+    // forward up to half a second.
+    setNow(nowMs);
+    setPauseStartedAt(nowMs);
     setPaused(true);
-    setPauseStartedAt(Date.now());
   }, [running, paused]);
 
   const resume = useCallback(() => {
     if (!running || !paused) return;
+    const nowMs = Date.now();
     if (pauseStartedAt) {
-      setPausedMs((p) => p + (Date.now() - pauseStartedAt));
+      setPausedMs((p) => p + (nowMs - pauseStartedAt));
     }
+    // Same reason as pause(): snap `now` to the resume instant so the next
+    // render uses a fresh reference. Otherwise it reuses the stale tick value
+    // and elapsed appears to jump backward until the interval fires again.
+    setNow(nowMs);
     setPauseStartedAt(null);
     setPaused(false);
   }, [running, paused, pauseStartedAt]);
