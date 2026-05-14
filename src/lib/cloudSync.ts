@@ -19,7 +19,11 @@ import {
   saveSession,
   saveSettings,
   saveTask,
-  saveTaskNote
+  saveTaskNote,
+  deleteMoodEntry,
+  deleteSession,
+  deleteTask,
+  deleteTaskNote
 } from "./storage";
 
 // ── Config ─────────────────────────────────────────────────────────────────
@@ -69,6 +73,7 @@ interface CloudSession {
   created_at: string;
   updated_at: string;
   synced_at: string | null;
+  deleted_at: string | null;
 }
 
 interface CloudTask {
@@ -80,6 +85,7 @@ interface CloudTask {
   tag: string;
   planned_minutes: number | null;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 interface CloudTaskNote {
@@ -90,6 +96,7 @@ interface CloudTaskNote {
   content: string;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 interface CloudMoodEntry {
@@ -100,6 +107,7 @@ interface CloudMoodEntry {
   position: StarPosition | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 interface CloudUserSettings {
@@ -115,7 +123,11 @@ interface CloudUserSettings {
 
 // ── Mappers ────────────────────────────────────────────────────────────────
 
-function sessionToCloud(s: FocusSession, uid: string): CloudSession {
+// NOTE: deleted_at is intentionally omitted from all toCloud payloads.
+// Including it would let a concurrent sync-push overwrite a tombstone another
+// device just wrote, resurrecting the row. Upsert only updates columns present
+// in the payload, so omitting deleted_at preserves whatever the DB already has.
+function sessionToCloud(s: FocusSession, uid: string): Omit<CloudSession, "deleted_at"> {
   return {
     id: s.id,
     user_id: uid,
@@ -158,7 +170,7 @@ function sessionFromCloud(c: CloudSession): FocusSession {
   };
 }
 
-function taskToCloud(t: Task, uid: string): CloudTask {
+function taskToCloud(t: Task, uid: string): Omit<CloudTask, "deleted_at"> {
   return {
     id: t.id,
     user_id: uid,
@@ -183,7 +195,7 @@ function taskFromCloud(c: CloudTask): Task {
   };
 }
 
-function noteToCloud(n: TaskNote, uid: string): CloudTaskNote {
+function noteToCloud(n: TaskNote, uid: string): Omit<CloudTaskNote, "deleted_at"> {
   return {
     id: n.id,
     user_id: uid,
@@ -206,7 +218,7 @@ function noteFromCloud(c: CloudTaskNote): TaskNote {
   };
 }
 
-function moodToCloud(m: MoodEntry, uid: string): CloudMoodEntry {
+function moodToCloud(m: MoodEntry, uid: string): Omit<CloudMoodEntry, "deleted_at"> {
   return {
     id: m.id,
     user_id: uid,
@@ -254,47 +266,11 @@ function settingsFromCloud(c: CloudUserSettings): UserSettings {
   };
 }
 
-// ── Per-record push (fire-and-forget) ──────────────────────────────────────
-//
-// Each local write triggers an immediate non-blocking upsert to cloud.
-// On network failure we log and move on; the next full syncAll() will catch it
-// (because local.updated_at > cloud.updated_at).
+// ── Settings push (single-row, no conflict with deletes) ──────────────────
 
 function logPushErr(table: string, err: unknown) {
   // eslint-disable-next-line no-console
   console.warn(`[sync] push ${table} failed:`, err);
-}
-
-export function pushSession(s: FocusSession): void {
-  if (!supabase || !userId) return;
-  supabase
-    .from("focus_sessions")
-    .upsert(sessionToCloud(s, userId))
-    .then(({ error }) => { if (error) logPushErr("focus_sessions", error.message); });
-}
-
-export function pushTask(t: Task): void {
-  if (!supabase || !userId) return;
-  supabase
-    .from("tasks")
-    .upsert(taskToCloud(t, userId))
-    .then(({ error }) => { if (error) logPushErr("tasks", error.message); });
-}
-
-export function pushTaskNote(n: TaskNote): void {
-  if (!supabase || !userId) return;
-  supabase
-    .from("task_notes")
-    .upsert(noteToCloud(n, userId))
-    .then(({ error }) => { if (error) logPushErr("task_notes", error.message); });
-}
-
-export function pushMoodEntry(m: MoodEntry): void {
-  if (!supabase || !userId) return;
-  supabase
-    .from("mood_entries")
-    .upsert(moodToCloud(m, userId))
-    .then(({ error }) => { if (error) logPushErr("mood_entries", error.message); });
 }
 
 export function pushSettings(s: UserSettings): void {
@@ -305,11 +281,18 @@ export function pushSettings(s: UserSettings): void {
     .then(({ error }) => { if (error) logPushErr("user_settings", error.message); });
 }
 
-// ── Per-record delete (awaitable, tombstone queue on failure) ─────────────
+// Per-record push for the 4 deletable tables was removed deliberately —
+// a fire-and-forget upsert that runs after a concurrent delete from another
+// device would silently resurrect a deleted row. All writes flow through
+// scheduleSync() instead, which runs syncAll() that pulls-then-pushes with
+// soft-delete awareness.
+
+// ── Per-record soft-delete (awaitable, tombstone queue on failure) ────────
 //
-// Deletes need to be reliable — last-write-wins without tombstones means a
-// failed cloud delete causes the record to come back on next pull. We retry
-// failed deletes via a localStorage-backed queue that syncAll drains.
+// We use UPDATE deleted_at = now() instead of a real DELETE so other devices
+// can see the deletion via their next pull. The tombstone queue retries on
+// transient failures, and pull-time we skip records the user just deleted
+// (so they aren't pulled back before the cloud knows about the delete).
 
 const TOMBSTONE_KEY = "openfocus_pending_deletes";
 
@@ -352,8 +335,13 @@ function clearTombstone(table: string, id: string): void {
 async function drainTombstones(client: SupabaseClient, uid: string): Promise<void> {
   const list = readTombstones();
   if (list.length === 0) return;
+  const now = new Date().toISOString();
   for (const t of list) {
-    const { error } = await client.from(t.table).delete().eq("id", t.id).eq("user_id", uid);
+    const { error } = await client
+      .from(t.table)
+      .update({ deleted_at: now, updated_at: now })
+      .eq("id", t.id)
+      .eq("user_id", uid);
     if (!error) {
       clearTombstone(t.table, t.id);
     } else {
@@ -363,14 +351,19 @@ async function drainTombstones(client: SupabaseClient, uid: string): Promise<voi
   }
 }
 
-async function deleteOne(table: string, id: string): Promise<void> {
+async function softDeleteOne(table: string, id: string): Promise<void> {
   if (!supabase || !userId) {
     queueTombstone(table, id);
     return;
   }
-  const { error } = await supabase.from(table).delete().eq("id", id).eq("user_id", userId);
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from(table)
+    .update({ deleted_at: now, updated_at: now })
+    .eq("id", id)
+    .eq("user_id", userId);
   if (error) {
-    logPushErr(`${table} delete`, error.message);
+    logPushErr(`${table} soft-delete`, error.message);
     queueTombstone(table, id);
   } else {
     clearTombstone(table, id);
@@ -378,19 +371,19 @@ async function deleteOne(table: string, id: string): Promise<void> {
 }
 
 export function deleteCloudSession(id: string): Promise<void> {
-  return deleteOne("focus_sessions", id);
+  return softDeleteOne("focus_sessions", id);
 }
 
 export function deleteCloudTask(id: string): Promise<void> {
-  return deleteOne("tasks", id);
+  return softDeleteOne("tasks", id);
 }
 
 export function deleteCloudTaskNote(id: string): Promise<void> {
-  return deleteOne("task_notes", id);
+  return softDeleteOne("task_notes", id);
 }
 
 export function deleteCloudMoodEntry(id: string): Promise<void> {
-  return deleteOne("mood_entries", id);
+  return softDeleteOne("mood_entries", id);
 }
 
 // ── Debounced auto-sync trigger ────────────────────────────────────────────
@@ -425,17 +418,25 @@ interface SyncTableOpts<L, C> {
   table: string;
   client: SupabaseClient;
   uid: string;
-  toCloud: (l: L, uid: string) => C;
+  toCloud: (l: L, uid: string) => Omit<C, "deleted_at">;
   fromCloud: (c: C) => L;
   getLocalId: (l: L) => string;
   getLocalUpdatedAt: (l: L) => string;
   getCloudUpdatedAt: (c: C) => string;
+  getCloudDeletedAt: (c: C) => string | null;
   fetchLocal: () => Promise<L[]>;
   saveLocal: (l: L) => Promise<void>;
+  deleteLocal: (id: string) => Promise<void>;
 }
 
 async function syncTable<L, C extends { id: string }>(opts: SyncTableOpts<L, C>): Promise<void> {
   const { client, uid, table } = opts;
+
+  // IDs the user deleted locally but whose cloud soft-delete is still queued.
+  // Skip pulling them so they don't reappear before the tombstone drains.
+  const tombstoneIds = new Set(
+    readTombstones().filter((t) => t.table === table).map((t) => t.id)
+  );
 
   const [{ data: cloudRows, error: pullErr }, localRows] = await Promise.all([
     client.from(table).select("*").eq("user_id", uid),
@@ -449,8 +450,19 @@ async function syncTable<L, C extends { id: string }>(opts: SyncTableOpts<L, C>)
   const localById = new Map<string, L>();
   for (const l of localRows) localById.set(opts.getLocalId(l), l);
 
-  // Cloud → local: pull rows where cloud is newer (or local missing)
+  // Cloud → local
   for (const [id, cloud] of cloudById) {
+    if (tombstoneIds.has(id)) continue;
+
+    const cloudDeletedAt = opts.getCloudDeletedAt(cloud);
+    if (cloudDeletedAt) {
+      // Another device soft-deleted this row. Hard-delete it locally if present.
+      if (localById.has(id)) {
+        await opts.deleteLocal(id);
+      }
+      continue;
+    }
+
     const local = localById.get(id);
     const cloudUpdatedAt = opts.getCloudUpdatedAt(cloud);
     if (!local || opts.getLocalUpdatedAt(local) < cloudUpdatedAt) {
@@ -458,16 +470,20 @@ async function syncTable<L, C extends { id: string }>(opts: SyncTableOpts<L, C>)
     }
   }
 
-  // Local → cloud: batch-upsert rows where local is newer (or cloud missing)
-  const toPush: C[] = [];
+  // Local → cloud (skip rows the cloud has soft-deleted — don't resurrect)
+  const toPush: Omit<C, "deleted_at">[] = [];
   for (const [id, local] of localById) {
     const cloud = cloudById.get(id);
+    if (cloud && opts.getCloudDeletedAt(cloud)) continue;
     if (!cloud || opts.getCloudUpdatedAt(cloud) < opts.getLocalUpdatedAt(local)) {
       toPush.push(opts.toCloud(local, uid));
     }
   }
   if (toPush.length > 0) {
-    const { error: pushErr } = await client.from(table).upsert(toPush);
+    // Cast: upsert expects full C, but omitting deleted_at is intentional —
+    // Postgres won't update columns absent from the payload, preserving any
+    // tombstone written between our pull and push.
+    const { error: pushErr } = await client.from(table).upsert(toPush as unknown as C[]);
     if (pushErr) throw new Error(`[sync] push ${table}: ${pushErr.message}`);
   }
 }
@@ -477,7 +493,7 @@ async function syncTable<L, C extends { id: string }>(opts: SyncTableOpts<L, C>)
 export async function syncAll(): Promise<void> {
   const { client, uid } = assertReady();
 
-  // Drain any queued deletes first so we don't pull deleted records back.
+  // Drain any queued soft-deletes first so we don't pull deleted rows back.
   await drainTombstones(client, uid);
 
   await Promise.all([
@@ -489,8 +505,10 @@ export async function syncAll(): Promise<void> {
       getLocalId: (s) => s.id,
       getLocalUpdatedAt: (s) => s.updatedAt,
       getCloudUpdatedAt: (c) => c.updated_at,
+      getCloudDeletedAt: (c) => c.deleted_at,
       fetchLocal: getSessions,
-      saveLocal: saveSession
+      saveLocal: saveSession,
+      deleteLocal: deleteSession
     }),
     syncTable<Task, CloudTask>({
       table: "tasks",
@@ -500,8 +518,10 @@ export async function syncAll(): Promise<void> {
       getLocalId: (t) => t.id,
       getLocalUpdatedAt: (t) => t.updatedAt ?? "1970-01-01T00:00:00.000Z",
       getCloudUpdatedAt: (c) => c.updated_at,
+      getCloudDeletedAt: (c) => c.deleted_at,
       fetchLocal: getTasks,
-      saveLocal: saveTask
+      saveLocal: saveTask,
+      deleteLocal: deleteTask
     }),
     syncTable<TaskNote, CloudTaskNote>({
       table: "task_notes",
@@ -511,8 +531,10 @@ export async function syncAll(): Promise<void> {
       getLocalId: (n) => n.id,
       getLocalUpdatedAt: (n) => n.updatedAt,
       getCloudUpdatedAt: (c) => c.updated_at,
+      getCloudDeletedAt: (c) => c.deleted_at,
       fetchLocal: getAllTaskNotes,
-      saveLocal: saveTaskNote
+      saveLocal: saveTaskNote,
+      deleteLocal: deleteTaskNote
     }),
     syncTable<MoodEntry, CloudMoodEntry>({
       table: "mood_entries",
@@ -522,8 +544,10 @@ export async function syncAll(): Promise<void> {
       getLocalId: (m) => m.id,
       getLocalUpdatedAt: (m) => m.updatedAt,
       getCloudUpdatedAt: (c) => c.updated_at,
+      getCloudDeletedAt: (c) => c.deleted_at,
       fetchLocal: getAllMoodEntries,
-      saveLocal: saveMoodEntry
+      saveLocal: saveMoodEntry,
+      deleteLocal: deleteMoodEntry
     }),
     syncSettings(client, uid)
   ]);

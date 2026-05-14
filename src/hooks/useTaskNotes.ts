@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { TaskNote } from "../types";
 import { deleteTaskNote, getTaskNotes, saveTaskNote } from "../lib/storage";
-import { deleteCloudTaskNote, pushTaskNote, scheduleSync } from "../lib/cloudSync";
+import { deleteCloudTaskNote, scheduleSync } from "../lib/cloudSync";
 
 export function useTaskNotes(taskId: string | null) {
   const [notes, setNotes] = useState<TaskNote[]>([]);
@@ -21,7 +21,6 @@ export function useTaskNotes(taskId: string | null) {
   const upsert = useCallback(
     async (note: TaskNote) => {
       await saveTaskNote(note);
-      pushTaskNote(note);
       scheduleSync();
       await refresh();
     },
