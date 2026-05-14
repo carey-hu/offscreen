@@ -77,6 +77,49 @@ export default function App() {
     <TimerProvider settings={settings} onSave={upsertSession} onEnsureTask={ensureTask}>
       <main className="min-h-screen bg-page text-primary selection:bg-indigo-500/30">
         <header className="relative flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 px-4 sm:px-8 py-4 sm:py-6">
+          <div className="order-first flex items-center justify-end gap-2 sm:gap-4 sm:absolute sm:right-4 lg:right-8 sm:order-none">
+            <div className="flex items-center gap-2 sm:gap-3 bg-card px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-secondary shadow-lg">
+              <button
+                onClick={() => shiftDate(-1)}
+                className="text-muted hover:text-primary transition"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span>
+                {format(selectedDate, "M月d日 EEEE", { locale: zhCN })}
+              </span>
+              <button
+                onClick={() => shiftDate(1)}
+                className="text-muted hover:text-primary transition"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+            <div className="relative">
+              <button
+                onClick={() => setCalendarOpen((o) => !o)}
+                className={`grid h-10 w-10 place-items-center rounded-xl transition shadow-lg ${
+                  calendarOpen
+                    ? "bg-indigo-500/20 text-indigo-400"
+                    : "bg-card text-muted hover:text-primary"
+                }`}
+                title="日历 · 每日专注"
+              >
+                <Calendar size={20} />
+              </button>
+              <CalendarPopover
+                open={calendarOpen}
+                sessions={sessions}
+                selectedDate={selectedDate}
+                onSelect={(d) => {
+                  setSelectedDate(d);
+                  setDetailDate(d);
+                }}
+                onClose={() => setCalendarOpen(false)}
+              />
+            </div>
+          </div>
+
           <nav className="w-full sm:w-auto flex items-center justify-center bg-card p-1 rounded-2xl shadow-xl">
             <button
               onClick={() => setActiveTab("stats")}
@@ -119,52 +162,6 @@ export default function App() {
               设置
             </button>
           </nav>
-
-          <div className="flex items-center justify-end gap-2 sm:gap-4 sm:absolute sm:right-4 lg:right-8">
-            <div className="flex items-center gap-2 sm:gap-3 bg-card px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-secondary shadow-lg">
-              <button
-                onClick={() => shiftDate(-1)}
-                className="text-muted hover:text-primary transition"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="hidden sm:inline">
-                {format(selectedDate, "M月d日 EEEE", { locale: zhCN })}
-              </span>
-              <span className="sm:hidden">
-                {format(selectedDate, "M月d日 EEEE", { locale: zhCN })}
-              </span>
-              <button
-                onClick={() => shiftDate(1)}
-                className="text-muted hover:text-primary transition"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-            <div className="relative">
-              <button
-                onClick={() => setCalendarOpen((o) => !o)}
-                className={`grid h-10 w-10 place-items-center rounded-xl transition shadow-lg ${
-                  calendarOpen
-                    ? "bg-indigo-500/20 text-indigo-400"
-                    : "bg-card text-muted hover:text-primary"
-                }`}
-                title="日历 · 每日专注"
-              >
-                <Calendar size={20} />
-              </button>
-              <CalendarPopover
-                open={calendarOpen}
-                sessions={sessions}
-                selectedDate={selectedDate}
-                onSelect={(d) => {
-                  setSelectedDate(d);
-                  setDetailDate(d);
-                }}
-                onClose={() => setCalendarOpen(false)}
-              />
-            </div>
-          </div>
         </header>
 
         {activeTab === "starjar" ? (
