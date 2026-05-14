@@ -69,28 +69,9 @@ VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 ```
 
-3. 创建数据表 `focus_sessions`
+3. 在 Supabase 项目的 SQL Editor 执行 [`supabase/schema.sql`](supabase/schema.sql)（幂等，已有库重跑也安全）。
 
-参考字段：
-
-```sql
-create table focus_sessions (
-  id uuid primary key,
-  user_id text,
-  device_id text not null,
-  title text not null,
-  tag text not null,
-  mode text not null,
-  start_time timestamptz not null,
-  end_time timestamptz,
-  planned_minutes int not null,
-  actual_minutes int not null default 0,
-  status text not null,
-  created_at timestamptz not null,
-  updated_at timestamptz not null,
-  synced_at timestamptz
-);
-```
+> 该 schema 包含软删除所需的 `deleted_at` 列。少了它会导致删除操作云端静默失败 —— 本地能删，但下次同步又把记录拉回来。
 
 ## 开源建议
 

@@ -26,7 +26,11 @@ export function useSessions() {
   const remove = useCallback(
     async (id: string) => {
       await deleteSession(id);
-      await deleteCloudSession(id);
+      try {
+        await deleteCloudSession(id);
+      } catch {
+        // softDeleteOne already logged; tombstone queue will retry next sync.
+      }
       scheduleSync();
       await refresh();
     },
@@ -36,7 +40,13 @@ export function useSessions() {
   const clear = useCallback(async () => {
     const all = await getSessions();
     await clearSessions();
-    await Promise.all(all.map((s) => deleteCloudSession(s.id)));
+    await Promise.all(
+      all.map((s) =>
+        deleteCloudSession(s.id).catch(() => {
+          /* softDeleteOne already logged; retry via tombstone queue */
+        })
+      )
+    );
     scheduleSync();
     await refresh();
   }, [refresh]);

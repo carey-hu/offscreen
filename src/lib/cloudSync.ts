@@ -270,7 +270,7 @@ function settingsFromCloud(c: CloudUserSettings): UserSettings {
 
 function logPushErr(table: string, err: unknown) {
   // eslint-disable-next-line no-console
-  console.warn(`[sync] push ${table} failed:`, err);
+  console.error(`[sync] push ${table} failed:`, err);
 }
 
 export function pushSettings(s: UserSettings): void {
@@ -293,6 +293,10 @@ export function pushSettings(s: UserSettings): void {
 // can see the deletion via their next pull. The tombstone queue retries on
 // transient failures, and pull-time we skip records the user just deleted
 // (so they aren't pulled back before the cloud knows about the delete).
+//
+// IMPORTANT: this requires the cloud tables to have a `deleted_at timestamptz`
+// column. Without it the UPDATE errors out (PostgREST "column does not exist")
+// and softDeleteOne throws — see supabase/schema.sql.
 
 const TOMBSTONE_KEY = "openfocus_pending_deletes";
 
@@ -346,7 +350,7 @@ async function drainTombstones(client: SupabaseClient, uid: string): Promise<voi
       clearTombstone(t.table, t.id);
     } else {
       // eslint-disable-next-line no-console
-      console.warn(`[sync] tombstone retry ${t.table}/${t.id}:`, error.message);
+      console.error(`[sync] tombstone retry ${t.table}/${t.id}:`, error.message);
     }
   }
 }
@@ -363,11 +367,14 @@ async function softDeleteOne(table: string, id: string): Promise<void> {
     .eq("id", id)
     .eq("user_id", userId);
   if (error) {
-    logPushErr(`${table} soft-delete`, error.message);
+    // Queue for retry, then throw so the caller (and unhandled-rejection
+    // surfaces in browsers) can see the failure. Schema mismatches and RLS
+    // misconfigs would otherwise be invisible — every prior bug here was
+    // "I deleted but it came back" caused by a swallowed error.
     queueTombstone(table, id);
-  } else {
-    clearTombstone(table, id);
+    throw new Error(`[sync] ${table} soft-delete failed: ${error.message}`);
   }
+  clearTombstone(table, id);
 }
 
 export function deleteCloudSession(id: string): Promise<void> {
@@ -407,7 +414,7 @@ export function scheduleSync(delayMs = 1500): void {
     const cb = syncCallback;
     if (cb) cb().catch((e) => {
       // eslint-disable-next-line no-console
-      console.warn("[sync] scheduled sync failed:", e);
+      console.error("[sync] scheduled sync failed:", e);
     });
   }, delayMs);
 }

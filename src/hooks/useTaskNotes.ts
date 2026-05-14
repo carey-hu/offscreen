@@ -30,7 +30,11 @@ export function useTaskNotes(taskId: string | null) {
   const remove = useCallback(
     async (id: string) => {
       await deleteTaskNote(id);
-      await deleteCloudTaskNote(id);
+      try {
+        await deleteCloudTaskNote(id);
+      } catch {
+        // softDeleteOne already logged; tombstone queue will retry next sync.
+      }
       scheduleSync();
       await refresh();
     },

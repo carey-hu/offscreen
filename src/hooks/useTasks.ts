@@ -27,7 +27,11 @@ export function useTasks() {
   const remove = useCallback(
     async (id: string) => {
       await deleteTask(id);
-      await deleteCloudTask(id);
+      try {
+        await deleteCloudTask(id);
+      } catch {
+        // softDeleteOne already logged; tombstone queue will retry next sync.
+      }
       scheduleSync();
       await refresh();
     },

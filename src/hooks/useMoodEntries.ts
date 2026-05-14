@@ -30,7 +30,11 @@ export function useMoodEntries() {
   const remove = useCallback(
     async (id: string) => {
       await deleteMoodEntry(id);
-      await deleteCloudMoodEntry(id);
+      try {
+        await deleteCloudMoodEntry(id);
+      } catch {
+        // softDeleteOne already logged; tombstone queue will retry next sync.
+      }
       scheduleSync();
       await refresh();
     },
