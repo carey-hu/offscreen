@@ -189,6 +189,14 @@ body {
   --star-fill-mid: #fcd34d;
   --star-fill-bot: #f59e0b;
 
+  /* Star body color range, theme-aware. Light mode keeps high-brightness
+     end saturated (warm gold) instead of cream so stars don't disappear
+     against the light page background. */
+  --star-fill-low: #b0641e;
+  --star-fill-high: #fec332;
+  --star-stroke: rgba(120, 60, 0, 0.42);
+  --star-stroke-width: 0.8;
+
   /* Jar glass — soft neutral hairlines, not amber */
   --jar-glass-top: rgba(28, 28, 30, 0.025);
   --jar-glass-bot: rgba(180, 130, 40, 0.04);
@@ -229,6 +237,12 @@ body {
   --star-fill-top: #fef3c7;
   --star-fill-mid: #fbbf24;
   --star-fill-bot: #d97706;
+
+  /* Dark mode keeps the cream-at-the-top look — pops on the dark bg. */
+  --star-fill-low: #b27832;
+  --star-fill-high: #fffad7;
+  --star-stroke: transparent;
+  --star-stroke-width: 0;
 
   --jar-glass-top: rgba(255, 255, 255, 0.04);
   --jar-glass-bot: rgba(251, 191, 36, 0.05);

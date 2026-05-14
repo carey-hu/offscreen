@@ -30,6 +30,7 @@ interface TimerContextValue {
   displayMs: number;
   progress: number;
   plannedMinutes: number;
+  shortBreakMinutes: number;
 
   setMode: (mode: FocusMode) => void;
   setTitle: (title: string) => void;
@@ -38,6 +39,7 @@ interface TimerContextValue {
   setMinutes: (n: number) => void;
 
   start: (overrides?: StartOverrides) => Promise<void>;
+  startBreak: () => Promise<void>;
   pause: () => void;
   resume: () => void;
   finish: (status?: "completed" | "abandoned") => Promise<void>;
@@ -240,6 +242,15 @@ export function TimerProvider({ children, settings, onSave, onEnsureTask }: Prov
     setPaused(false);
   }, [running, paused, pauseStartedAt]);
 
+  const startBreak = useCallback(async () => {
+    await start({
+      mode: "countdown",
+      minutes: settings.shortBreakMinutes,
+      title: "短休息",
+      tag: "休息"
+    });
+  }, [start, settings.shortBreakMinutes]);
+
   const value: TimerContextValue = {
     mode,
     title,
@@ -254,12 +265,14 @@ export function TimerProvider({ children, settings, onSave, onEnsureTask }: Prov
     displayMs,
     progress,
     plannedMinutes,
+    shortBreakMinutes: settings.shortBreakMinutes,
     setMode,
     setTitle,
     setTag,
     setHours,
     setMinutes,
     start,
+    startBreak,
     pause,
     resume,
     finish

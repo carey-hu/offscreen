@@ -28,13 +28,11 @@ function brightnessOf(content: string): number {
   return Math.min(len / MAX_BRIGHT_CHARS, 1);
 }
 
-// Brightness-driven star fill — muted amber at low end, bright cream at full
+// Theme-aware fill via CSS color-mix — endpoints (--star-fill-low/high)
+// swap per theme so high-brightness stars stay saturated on light bg.
 function starFill(brightness: number): string {
-  const t = brightness;
-  const r = Math.round(178 + t * 77);
-  const g = Math.round(120 + t * 130);
-  const b = Math.round(50 + t * 165);
-  return `rgb(${r},${g},${b})`;
+  const pct = Math.round(brightness * 100);
+  return `color-mix(in srgb, var(--star-fill-high) ${pct}%, var(--star-fill-low))`;
 }
 
 function pickFilter(brightness: number): string {
@@ -48,7 +46,7 @@ interface PourStar {
   fromX: number;
   fromY: number;
   r: number;
-  color: string;
+  brightness: number;
   rot: number;
   tx: number;       // horizontal end offset (px)
   peak: number;     // initial upward leap (px, negative)
@@ -129,7 +127,7 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
         fromX: (pos.x - 160) * svgScale,
         fromY: (pos.y - 245) * svgScale,
         r: pos.r * svgScale,
-        color: starFill(brightnessOf(entry.content)),
+        brightness: brightnessOf(entry.content),
         rot: pos.rot,
         tx,
         peak,
@@ -277,17 +275,20 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
               const livePos = livePositions.get(entry.id) ?? (entry.position ? { x: entry.position.x, y: entry.position.y, r: entry.position.r, rot: entry.position.rot, vx: 0, vy: 0 } : null);
               if (!livePos) return null;
               const brightness = brightnessOf(entry.content);
-              const color = starFill(brightness);
               const filterId = pickFilter(brightness);
-              const opacity = 0.45 + brightness * 0.55;
+              const opacity = 0.55 + brightness * 0.45;
               const path = makeRoundedStarPath(livePos.x, livePos.y, livePos.r, livePos.rot);
               return (
                 <g key={entry.id} filter={`url(#${filterId})`}>
                   <path
                     d={path}
-                    fill={color}
-                    opacity={opacity}
-                    style={{ transition: "opacity 0.3s ease, fill 0.3s ease" }}
+                    style={{
+                      fill: starFill(brightness),
+                      stroke: "var(--star-stroke)",
+                      strokeWidth: "var(--star-stroke-width)",
+                      opacity,
+                      transition: "opacity 0.3s ease, fill 0.3s ease"
+                    }}
                   />
                 </g>
               );
@@ -401,7 +402,11 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
               >
                 <path
                   d={makeRoundedStarPath(ps.r, ps.r, ps.r, ps.rot)}
-                  fill={ps.color}
+                  style={{
+                    fill: starFill(ps.brightness),
+                    stroke: "var(--star-stroke)",
+                    strokeWidth: "var(--star-stroke-width)"
+                  }}
                 />
               </svg>
             </div>

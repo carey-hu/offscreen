@@ -1,4 +1,4 @@
-import { RotateCcw, ChevronDown } from "lucide-react";
+import { RotateCcw, ChevronDown, Coffee } from "lucide-react";
 import { FocusMode } from "../types";
 import { WheelPicker } from "./WheelPicker";
 import { useTimer } from "../contexts/TimerContext";
@@ -59,7 +59,7 @@ export function TimerPanel() {
         )}
       </div>
 
-      <div className="flex gap-2 mb-8 sm:mb-10 flex-wrap justify-center max-w-full">
+      <div className="flex gap-2 mb-3 flex-wrap justify-center max-w-full">
         {modeOptions.map((opt) => (
           <button
             key={opt.value}
@@ -73,6 +73,22 @@ export function TimerPanel() {
           </button>
         ))}
       </div>
+
+      {!t.running && (
+        <button
+          onClick={() => t.startBreak()}
+          className="mb-8 sm:mb-10 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition active:scale-95"
+          style={{
+            background: "rgba(48, 209, 88, 0.12)",
+            color: "#30D158"
+          }}
+        >
+          <Coffee size={13} strokeWidth={2.25} />
+          短休息 · {t.shortBreakMinutes} 分钟
+        </button>
+      )}
+
+      {t.running && <div className="mb-8 sm:mb-10" />}
 
       <div
         className="relative mb-10 sm:mb-12"

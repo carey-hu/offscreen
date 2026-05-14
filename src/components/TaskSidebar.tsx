@@ -4,7 +4,7 @@ import { Task } from "../types";
 import { useTimer } from "../contexts/TimerContext";
 import { TaskModal } from "./TaskModal";
 import { TaskDetailModal } from "./TaskDetailModal";
-import { tagColor } from "../lib/colors";
+import { taskColor } from "../lib/colors";
 
 interface Props {
   tasks: Task[];
@@ -34,61 +34,74 @@ export function TaskSidebar({
 
   return (
     <>
-      <aside className="space-y-4 lg:h-[calc(100vh-140px)] lg:overflow-y-auto no-scrollbar pb-6 lg:pb-12">
+      <aside className="space-y-3 lg:h-[calc(100vh-140px)] lg:overflow-y-auto no-scrollbar pb-6 lg:pb-12">
         <button
           onClick={() => {
             setEditing(null);
             setModalOpen(true);
           }}
-          className="w-full flex items-center justify-center gap-2 rounded-[1.5rem] border-2 border-dashed border-subtle py-4 text-sm font-bold text-secondary hover:text-primary hover:border-muted transition"
+          className="w-full flex items-center justify-center gap-2 rounded-[1.5rem] border-2 border-dashed border-subtle py-4 text-sm font-semibold text-secondary hover:text-primary hover:border-muted transition"
         >
           <Plus size={16} />
           <span>新任务</span>
         </button>
 
         {tasks.length === 0 && (
-          <div className="text-center text-xs font-bold uppercase tracking-widest text-faint mt-8 lg:mt-12">
+          <div className="text-center text-xs font-medium tracking-wide text-faint mt-8 lg:mt-12">
             暂无任务 · 点击上方新建,或直接开始专注会自动创建
           </div>
         )}
 
         {tasks.map((task) => {
-          const accent = tagColor(task.tag);
+          const accent = taskColor(task.id);
           const isActive = timer.taskId === task.id && timer.running;
           return (
             <div
               key={task.id}
-              className={`group relative flex items-center justify-between gap-3 rounded-[2rem] bg-card p-4 sm:p-5 transition-transform hover:scale-[1.01] overflow-hidden ${
-                isActive ? "ring-2 ring-indigo-400/60" : "ring-1 ring-subtle"
+              className={`group relative flex items-center justify-between gap-3 rounded-[1.75rem] bg-card p-4 sm:p-5 transition-all duration-200 hover:scale-[1.01] overflow-hidden ${
+                isActive ? "ring-2" : "ring-1 ring-subtle"
               }`}
+              style={isActive ? { boxShadow: `inset 0 0 0 2px ${accent}` } : undefined}
             >
+              {/* Left accent stripe */}
               <span
                 className="absolute left-0 top-0 bottom-0 w-1"
                 style={{ background: accent }}
               />
-              <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1 pl-1">
                 <div
-                  className="grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-full text-xl sm:text-2xl shrink-0"
-                  style={{ background: `${accent}22` }}
+                  className="grid h-12 w-12 sm:h-[52px] sm:w-[52px] place-items-center rounded-2xl text-xl sm:text-[22px] shrink-0"
+                  style={{
+                    background: `${accent}1F`,
+                    boxShadow: `inset 0 0 0 1px ${accent}33`
+                  }}
                 >
                   {task.icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-sm sm:text-base font-black text-primary truncate">
-                      {task.title}
-                    </h4>
-                  </div>
-                  <div className="mt-1 flex items-center gap-2 flex-wrap">
+                  <h4 className="text-[15px] sm:text-base font-semibold text-primary truncate tracking-tight">
+                    {task.title}
+                  </h4>
+                  <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                     <span
-                      className="rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase text-secondary"
-                      style={{ background: `${accent}44` }}
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-[3px] text-[11px] font-medium tracking-normal"
+                      style={{
+                        background: `${accent}1A`,
+                        color: accent
+                      }}
                     >
+                      <span
+                        className="inline-block h-1.5 w-1.5 rounded-full"
+                        style={{ background: accent }}
+                      />
                       {task.tag}
                     </span>
-                    <span className="text-[10px] font-black text-faint tracking-widest">
-                      {task.plannedMinutes ? `${task.plannedMinutes}m` : "--"}
-                    </span>
+                    {task.plannedMinutes ? (
+                      <span className="text-[11px] font-medium text-faint tabular-nums">
+                        {task.plannedMinutes} 分钟
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -126,11 +139,13 @@ export function TaskSidebar({
                   disabled={timer.running}
                   className="grid h-10 w-10 sm:h-11 sm:w-11 place-items-center rounded-full transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
                   style={{
-                    background: timer.running ? undefined : `${accent}22`,
-                    color: timer.running ? undefined : accent
+                    background: timer.running ? undefined : accent,
+                    color: timer.running ? undefined : "#fff",
+                    boxShadow: timer.running ? undefined : `0 4px 12px ${accent}40`
                   }}
+                  aria-label="开始"
                 >
-                  <Play size={18} fill="currentColor" />
+                  <Play size={16} fill="currentColor" />
                 </button>
               </div>
             </div>
