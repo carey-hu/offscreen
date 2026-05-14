@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { TaskNote } from "../types";
 import { deleteTaskNote, getTaskNotes, saveTaskNote } from "../lib/storage";
-import { deleteCloudTaskNote, pushTaskNote } from "../lib/cloudSync";
+import { deleteCloudTaskNote, pushTaskNote, scheduleSync } from "../lib/cloudSync";
 
 export function useTaskNotes(taskId: string | null) {
   const [notes, setNotes] = useState<TaskNote[]>([]);
@@ -22,6 +22,7 @@ export function useTaskNotes(taskId: string | null) {
     async (note: TaskNote) => {
       await saveTaskNote(note);
       pushTaskNote(note);
+      scheduleSync();
       await refresh();
     },
     [refresh]
@@ -30,7 +31,8 @@ export function useTaskNotes(taskId: string | null) {
   const remove = useCallback(
     async (id: string) => {
       await deleteTaskNote(id);
-      deleteCloudTaskNote(id);
+      await deleteCloudTaskNote(id);
+      scheduleSync();
       await refresh();
     },
     [refresh]

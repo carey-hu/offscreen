@@ -305,46 +305,118 @@ export function pushSettings(s: UserSettings): void {
     .then(({ error }) => { if (error) logPushErr("user_settings", error.message); });
 }
 
-// ── Per-record delete ──────────────────────────────────────────────────────
+// ── Per-record delete (awaitable, tombstone queue on failure) ─────────────
+//
+// Deletes need to be reliable — last-write-wins without tombstones means a
+// failed cloud delete causes the record to come back on next pull. We retry
+// failed deletes via a localStorage-backed queue that syncAll drains.
 
-export function deleteCloudSession(id: string): void {
-  if (!supabase || !userId) return;
-  supabase
-    .from("focus_sessions")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", userId)
-    .then(({ error }) => { if (error) logPushErr("focus_sessions delete", error.message); });
+const TOMBSTONE_KEY = "openfocus_pending_deletes";
+
+interface Tombstone {
+  table: string;
+  id: string;
 }
 
-export function deleteCloudTask(id: string): void {
-  if (!supabase || !userId) return;
-  supabase
-    .from("tasks")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", userId)
-    .then(({ error }) => { if (error) logPushErr("tasks delete", error.message); });
+function readTombstones(): Tombstone[] {
+  try {
+    const raw = localStorage.getItem(TOMBSTONE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as Tombstone[];
+  } catch {
+    return [];
+  }
 }
 
-export function deleteCloudTaskNote(id: string): void {
-  if (!supabase || !userId) return;
-  supabase
-    .from("task_notes")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", userId)
-    .then(({ error }) => { if (error) logPushErr("task_notes delete", error.message); });
+function writeTombstones(items: Tombstone[]): void {
+  try {
+    localStorage.setItem(TOMBSTONE_KEY, JSON.stringify(items));
+  } catch {
+    /* ignore */
+  }
 }
 
-export function deleteCloudMoodEntry(id: string): void {
-  if (!supabase || !userId) return;
-  supabase
-    .from("mood_entries")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", userId)
-    .then(({ error }) => { if (error) logPushErr("mood_entries delete", error.message); });
+function queueTombstone(table: string, id: string): void {
+  const list = readTombstones();
+  if (!list.some((t) => t.table === table && t.id === id)) {
+    list.push({ table, id });
+    writeTombstones(list);
+  }
+}
+
+function clearTombstone(table: string, id: string): void {
+  const list = readTombstones().filter((t) => !(t.table === table && t.id === id));
+  writeTombstones(list);
+}
+
+async function drainTombstones(client: SupabaseClient, uid: string): Promise<void> {
+  const list = readTombstones();
+  if (list.length === 0) return;
+  for (const t of list) {
+    const { error } = await client.from(t.table).delete().eq("id", t.id).eq("user_id", uid);
+    if (!error) {
+      clearTombstone(t.table, t.id);
+    } else {
+      // eslint-disable-next-line no-console
+      console.warn(`[sync] tombstone retry ${t.table}/${t.id}:`, error.message);
+    }
+  }
+}
+
+async function deleteOne(table: string, id: string): Promise<void> {
+  if (!supabase || !userId) {
+    queueTombstone(table, id);
+    return;
+  }
+  const { error } = await supabase.from(table).delete().eq("id", id).eq("user_id", userId);
+  if (error) {
+    logPushErr(`${table} delete`, error.message);
+    queueTombstone(table, id);
+  } else {
+    clearTombstone(table, id);
+  }
+}
+
+export function deleteCloudSession(id: string): Promise<void> {
+  return deleteOne("focus_sessions", id);
+}
+
+export function deleteCloudTask(id: string): Promise<void> {
+  return deleteOne("tasks", id);
+}
+
+export function deleteCloudTaskNote(id: string): Promise<void> {
+  return deleteOne("task_notes", id);
+}
+
+export function deleteCloudMoodEntry(id: string): Promise<void> {
+  return deleteOne("mood_entries", id);
+}
+
+// ── Debounced auto-sync trigger ────────────────────────────────────────────
+//
+// Hooks call scheduleSync() after every local write. The registered callback
+// (from useSync) runs syncAll(), which pulls fresh changes + reconciles, and
+// updates the visible "last synced" timestamp.
+
+let scheduledTimer: ReturnType<typeof setTimeout> | null = null;
+let syncCallback: (() => Promise<void>) | null = null;
+
+export function registerSyncCallback(cb: () => Promise<void>): void {
+  syncCallback = cb;
+}
+
+export function scheduleSync(delayMs = 1500): void {
+  if (!isCloudSyncAvailable() || !syncCallback) return;
+  if (scheduledTimer) clearTimeout(scheduledTimer);
+  scheduledTimer = setTimeout(() => {
+    scheduledTimer = null;
+    const cb = syncCallback;
+    if (cb) cb().catch((e) => {
+      // eslint-disable-next-line no-console
+      console.warn("[sync] scheduled sync failed:", e);
+    });
+  }, delayMs);
 }
 
 // ── Generic per-table sync ─────────────────────────────────────────────────
@@ -404,6 +476,9 @@ async function syncTable<L, C extends { id: string }>(opts: SyncTableOpts<L, C>)
 
 export async function syncAll(): Promise<void> {
   const { client, uid } = assertReady();
+
+  // Drain any queued deletes first so we don't pull deleted records back.
+  await drainTombstones(client, uid);
 
   await Promise.all([
     syncTable<FocusSession, CloudSession>({

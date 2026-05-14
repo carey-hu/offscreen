@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { isCloudSyncAvailable, syncAll } from "../lib/cloudSync";
+import { isCloudSyncAvailable, registerSyncCallback, syncAll } from "../lib/cloudSync";
 
 export type SyncStatus = "idle" | "syncing" | "error" | "offline";
 
@@ -57,14 +57,13 @@ export function useSync({ onSynced }: Options) {
     }
   }, [onSynced]);
 
-  // Auto-pull on mount
+  // Auto-pull on mount + register as the scheduleSync target
   useEffect(() => {
+    registerSyncCallback(syncNow);
     if (isCloudSyncAvailable()) {
       syncNow();
     }
-    // intentionally only on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [syncNow]);
 
   // Re-sync when the tab regains focus (catches changes from other devices)
   useEffect(() => {

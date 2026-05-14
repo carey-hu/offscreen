@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { UserSettings } from "../types";
 import { getSettings, saveSettings } from "../lib/storage";
-import { pushSettings } from "../lib/cloudSync";
+import { pushSettings, scheduleSync } from "../lib/cloudSync";
 
 const DEFAULT_SETTINGS: UserSettings = {
   defaultMode: "pomodoro",
@@ -64,6 +64,7 @@ export function useSettings() {
         console.warn("[settings] save failed", e);
       }
       pushSettings(next);
+      scheduleSync();
       if (patch.theme) {
         try {
           localStorage.setItem(THEME_KEY, patch.theme);
