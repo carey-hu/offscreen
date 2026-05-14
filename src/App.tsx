@@ -230,6 +230,7 @@ export default function App() {
           sessions={sessions}
           onClose={() => setSessionHistoryOpen(false)}
           onSaveSession={upsertSession}
+          onDeleteSession={removeSession}
         />
       </main>
     </TimerProvider>

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { format, parseISO, isSameDay } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { FileText, X } from "lucide-react";
+import { FileText, Trash2, X } from "lucide-react";
 import { FocusSession } from "../types";
 import { tagColor } from "../lib/colors";
 
@@ -10,9 +10,10 @@ interface Props {
   sessions: FocusSession[];
   onClose: () => void;
   onSaveSession: (session: FocusSession) => Promise<void>;
+  onDeleteSession: (id: string) => Promise<void> | void;
 }
 
-export function SessionHistoryModal({ open, sessions, onClose, onSaveSession }: Props) {
+export function SessionHistoryModal({ open, sessions, onClose, onSaveSession, onDeleteSession }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
 
@@ -32,6 +33,18 @@ export function SessionHistoryModal({ open, sessions, onClose, onSaveSession }: 
     await onSaveSession(updated);
     setEditingId(null);
     setNoteText("");
+  }
+
+  async function handleDelete(session: FocusSession) {
+    const ok = window.confirm(
+      `删除这条记录?\n${session.title} · ${session.actualMinutes} 分钟`
+    );
+    if (!ok) return;
+    if (editingId === session.id) {
+      setEditingId(null);
+      setNoteText("");
+    }
+    await onDeleteSession(session.id);
   }
 
   return (
@@ -81,13 +94,13 @@ export function SessionHistoryModal({ open, sessions, onClose, onSaveSession }: 
                 return (
                   <div
                     key={session.id}
-                    className="rounded-2xl bg-page overflow-hidden"
+                    className="group relative rounded-2xl bg-page overflow-hidden"
                   >
                     <button
                       onClick={() =>
                         isEditing ? saveNote(session) : openEditor(session)
                       }
-                      className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-surface/50 transition"
+                      className="w-full text-left px-4 py-3 pr-12 flex items-center gap-3 hover:bg-surface/50 transition"
                     >
                       <div
                         className="h-2.5 w-2.5 rounded-full shrink-0"
@@ -118,6 +131,15 @@ export function SessionHistoryModal({ open, sessions, onClose, onSaveSession }: 
                       <span className="text-sm font-black text-secondary tabular-nums shrink-0">
                         {session.actualMinutes}m
                       </span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(session)}
+                      className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-red-500/15 hover:text-red-500 transition lg:opacity-0 lg:group-hover:opacity-100 focus:opacity-100"
+                      aria-label="删除"
+                      title="删除"
+                    >
+                      <Trash2 size={14} />
                     </button>
 
                     {isEditing && (
