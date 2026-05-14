@@ -118,9 +118,13 @@ export function TimerProvider({ children, settings, onSave, onEnsureTask }: Prov
 
   const elapsedMs = useMemo(() => {
     if (!startedAt) return 0;
-    const baseElapsed = now - startedAt - pausedMs;
+    // While paused, freeze elapsed at the moment of pause — otherwise the
+    // tick keeps advancing `now` and the display creeps forward during pause,
+    // then snaps backward on resume when `pausedMs` is finally settled.
+    const referenceNow = paused && pauseStartedAt ? pauseStartedAt : now;
+    const baseElapsed = referenceNow - startedAt - pausedMs;
     return Math.max(0, baseElapsed);
-  }, [now, startedAt, pausedMs]);
+  }, [now, startedAt, pausedMs, paused, pauseStartedAt]);
 
   const displayMs = mode === "stopwatch" ? elapsedMs : Math.max(0, targetMs - elapsedMs);
   const progress =
@@ -128,12 +132,12 @@ export function TimerProvider({ children, settings, onSave, onEnsureTask }: Prov
       ? 0
       : Math.min(100, (elapsedMs / targetMs) * 100);
 
-  // 500ms tick
+  // 500ms tick — only while running AND not paused
   useEffect(() => {
-    if (!running) return;
+    if (!running || paused) return;
     const timer = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(timer);
-  }, [running]);
+  }, [running, paused]);
 
   function reset() {
     setRunning(false);

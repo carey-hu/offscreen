@@ -7,24 +7,30 @@ interface Props {
   label: string;
 }
 
+const ITEM_HEIGHT = 40;
+
 export function WheelPicker({ value, onChange, max, label }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Sentinel of -1 ensures the first effect run syncs to the initial value.
+  const lastReportedRef = useRef<number>(-1);
   const items = Array.from({ length: max + 1 }, (_, i) => i);
 
+  // Sync scroll position whenever `value` changes externally (e.g. mode switch
+  // bumping the default minutes). Skip when the change originated from user
+  // scroll so we don't fight the scroll inertia.
   useEffect(() => {
-    if (scrollRef.current) {
-      const itemHeight = 40;
-      scrollRef.current.scrollTop = value * itemHeight;
-    }
-  }, []);
+    if (!scrollRef.current) return;
+    if (lastReportedRef.current === value) return;
+    scrollRef.current.scrollTop = value * ITEM_HEIGHT;
+    lastReportedRef.current = value;
+  }, [value]);
 
   const handleScroll = () => {
-    if (scrollRef.current) {
-      const itemHeight = 40;
-      const newValue = Math.round(scrollRef.current.scrollTop / itemHeight);
-      if (newValue !== value && newValue >= 0 && newValue <= max) {
-        onChange(newValue);
-      }
+    if (!scrollRef.current) return;
+    const newValue = Math.round(scrollRef.current.scrollTop / ITEM_HEIGHT);
+    if (newValue !== value && newValue >= 0 && newValue <= max) {
+      lastReportedRef.current = newValue;
+      onChange(newValue);
     }
   };
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Task } from "../types";
 import { deleteTask, getTasks, saveTask } from "../lib/storage";
+import { deleteCloudTask, pushTask } from "../lib/cloudSync";
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -15,7 +16,9 @@ export function useTasks() {
 
   const upsert = useCallback(
     async (task: Task) => {
-      await saveTask(task);
+      const stamped = { ...task, updatedAt: new Date().toISOString() };
+      await saveTask(stamped);
+      pushTask(stamped);
       await refresh();
     },
     [refresh]
@@ -24,6 +27,7 @@ export function useTasks() {
   const remove = useCallback(
     async (id: string) => {
       await deleteTask(id);
+      deleteCloudTask(id);
       await refresh();
     },
     [refresh]

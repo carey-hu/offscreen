@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { UserSettings } from "../types";
 import { getSettings, saveSettings } from "../lib/storage";
+import { pushSettings } from "../lib/cloudSync";
 
 const DEFAULT_SETTINGS: UserSettings = {
   defaultMode: "pomodoro",
@@ -26,6 +27,16 @@ export function useSettings() {
   });
   const [loading, setLoading] = useState(true);
 
+  const refresh = useCallback(async () => {
+    const s = await getSettings();
+    setSettings(s);
+    try {
+      localStorage.setItem(THEME_KEY, s.theme);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   useEffect(() => {
     getSettings().then((s) => {
       setSettings(s);
@@ -40,21 +51,29 @@ export function useSettings() {
 
   const update = useCallback(
     async (patch: Partial<UserSettings>) => {
-      setSettings((prev) => {
-        const next = { ...prev, ...patch };
-        saveSettings(next).catch(console.error);
-        if (patch.theme) {
-          try {
-            localStorage.setItem(THEME_KEY, patch.theme);
-          } catch {
-            /* ignore */
-          }
-        }
-        return next;
+      const next = await new Promise<UserSettings>((resolve) => {
+        setSettings((prev) => {
+          const merged = { ...prev, ...patch, updatedAt: new Date().toISOString() };
+          resolve(merged);
+          return merged;
+        });
       });
+      try {
+        await saveSettings(next);
+      } catch (e) {
+        console.warn("[settings] save failed", e);
+      }
+      pushSettings(next);
+      if (patch.theme) {
+        try {
+          localStorage.setItem(THEME_KEY, patch.theme);
+        } catch {
+          /* ignore */
+        }
+      }
     },
     []
   );
 
-  return { settings, loading, update };
+  return { settings, loading, update, refresh };
 }

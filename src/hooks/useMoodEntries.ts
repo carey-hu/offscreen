@@ -5,10 +5,11 @@ import {
   saveMoodEntry,
   deleteMoodEntry
 } from "../lib/storage";
+import { deleteCloudMoodEntry, pushMoodEntry } from "../lib/cloudSync";
 
 export function useMoodEntries() {
   const [entries, setEntries] = useState<MoodEntry[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -20,6 +21,7 @@ export function useMoodEntries() {
   const upsert = useCallback(
     async (entry: MoodEntry) => {
       await saveMoodEntry(entry);
+      pushMoodEntry(entry);
       await refresh();
     },
     [refresh]
@@ -28,6 +30,7 @@ export function useMoodEntries() {
   const remove = useCallback(
     async (id: string) => {
       await deleteMoodEntry(id);
+      deleteCloudMoodEntry(id);
       await refresh();
     },
     [refresh]

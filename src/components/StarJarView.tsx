@@ -1,5 +1,4 @@
-import { format } from "date-fns";
-import { Send, Trash2, Zap } from "lucide-react";
+import { ArrowUp, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MoodEntry, StarPosition } from "../types";
 import { makeRoundedStarPath } from "../lib/starPath";
@@ -21,15 +20,29 @@ function hasPosition(e: MoodEntry): e is MoodEntry & { position: StarPosition } 
   return e.position !== undefined;
 }
 
-function starColor(i: number, n: number): string {
-  const t = n > 0 ? i / n : 0;
-  const r = 255;
-  const g = Math.round(235 - t * 55);
-  const b = Math.round(175 - t * 115);
+const MAX_BRIGHT_CHARS = 15;
+
+// Character count → 0-1 brightness (codepoint-aware so emojis count as one)
+function brightnessOf(content: string): number {
+  const len = [...content].length;
+  return Math.min(len / MAX_BRIGHT_CHARS, 1);
+}
+
+// Brightness-driven star fill — muted amber at low end, bright cream at full
+function starFill(brightness: number): string {
+  const t = brightness;
+  const r = Math.round(178 + t * 77);
+  const g = Math.round(120 + t * 130);
+  const b = Math.round(50 + t * 165);
   return `rgb(${r},${g},${b})`;
 }
 
-// ── Pour-out scatter animation ──
+function pickFilter(brightness: number): string {
+  if (brightness < 0.34) return "sgDim";
+  if (brightness < 0.67) return "sgMid";
+  return "sgBright";
+}
+
 interface PourStar {
   id: string;
   fromX: number;
@@ -37,8 +50,9 @@ interface PourStar {
   r: number;
   color: string;
   rot: number;
-  tx: number;
-  ty: number;
+  tx: number;       // horizontal end offset (px)
+  peak: number;     // initial upward leap (px, negative)
+  spin: number;     // total rotation during fall (deg)
   delay: number;
   duration: number;
 }
@@ -53,28 +67,25 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
   const pourTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pourOrigin, setPourOrigin] = useState<{ x: number; y: number; scale: number }>({ x: 0, y: 0, scale: 1 });
 
-  // Cleanup pour timeout on unmount
   useEffect(() => {
     return () => {
       if (pourTimeoutRef.current) clearTimeout(pourTimeoutRef.current);
     };
   }, []);
 
-  const todayStr = format(new Date(), "yyyy-MM-dd");
   const entriesWithPos = useMemo(() => entries.filter(hasPosition), [entries]);
   const visibleStars = entriesWithPos.length;
   const total = entries.length;
   const glow = useMemo(() => computeGalaxyGlow(visibleStars), [visibleStars]);
 
-  // Real-time physics
   const { positions: livePositions } = useJarPhysics({
     entries,
     enabled: visibleStars > 0 && !isPouring,
   });
 
-  // Jar outer glow scales with star count
-  const jarGlowBlur = Math.min(40, 4 + visibleStars * 1.4);
-  const jarGlowOpacity = Math.min(0.55, 0.05 + visibleStars * 0.02);
+  // Outer haze intensity, gated lower for Apple subtlety
+  const hazeOpacity = Math.min(0.55, 0.10 + visibleStars * 0.018);
+  const hazeScale = 1 + Math.min(0.25, visibleStars * 0.008);
 
   async function handleSend() {
     const v = text.trim();
@@ -102,39 +113,41 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
     setPourOrigin({ x: originX, y: originY, scale: svgScale });
 
     const stars: PourStar[] = [];
-
     for (let i = 0; i < entriesWithPos.length; i++) {
       const entry = entriesWithPos[i];
       const pos = entry.position!;
-
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 300 + Math.random() * 500;
+      // Horizontal scatter (small fan), screen px
+      const tx = (Math.random() - 0.5) * 320;
+      // Small upward leap before gravity takes over
+      const peak = -(28 + Math.random() * 40);
+      // 1.5–3 full rotations, random direction
+      const spin = (Math.random() < 0.5 ? -1 : 1) * (540 + Math.random() * 540);
+      const duration = 1.6 + Math.random() * 0.7;
+      const delay = i * 0.05 + Math.random() * 0.1;
       stars.push({
         id: entry.id,
         fromX: (pos.x - 160) * svgScale,
         fromY: (pos.y - 245) * svgScale,
         r: pos.r * svgScale,
-        color: starColor(i, entriesWithPos.length),
+        color: starFill(brightnessOf(entry.content)),
         rot: pos.rot,
-        tx: Math.cos(angle) * dist + (Math.random() - 0.5) * 300,
-        ty: Math.sin(angle) * dist - 200 + (Math.random() - 0.5) * 400,
-        delay: i * 0.04,
-        duration: 1.8 + Math.random() * 1.4,
+        tx,
+        peak,
+        spin,
+        delay,
+        duration,
       });
     }
 
     setPourStars(stars);
     setIsPouring(true);
-
-    // After animation, clear jar positions (keeps entries & counts)
     pourTimeoutRef.current = setTimeout(async () => {
       await onClearJar();
       setPourStars([]);
       setIsPouring(false);
-    }, 3500);
+    }, 4500);
   }
 
-  // Cylinder SVG — 4:3 h:w ratio
   const { left, right, top, bottom, floor, cornerR } = CYLINDER;
   const cylinderPath = `
     M ${left} ${top}
@@ -144,55 +157,50 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
     C ${right - cornerR * 0.7} ${floor}, ${right} ${bottom + cornerR}, ${right} ${bottom}
     L ${right} ${top}
   `;
-  const cylinderClipPath = cylinderPath + " Z";   // closed — for clipPath
-  const cylinderBodyPath = cylinderPath;           // open at top — for visible stroke (rim ellipse closes it)
+  const cylinderClipPath = cylinderPath + " Z";
 
   return (
     <div className="flex flex-col items-center">
-      {/* ── Three stats ── */}
-      <div className="w-full max-w-[320px] flex justify-between mb-5 px-2">
-        <div className="flex flex-col items-center gap-0.5">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted">今日星星</span>
-          <span className="text-2xl font-black tabular-nums" style={{ color: "var(--star-bright)" }}>
-            {todayCount}<span className="text-xs font-bold text-muted ml-0.5">颗</span>
-          </span>
-        </div>
-        <div className="flex flex-col items-center gap-0.5">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted">连续亮星</span>
-          <span className="text-2xl font-black tabular-nums" style={{ color: "var(--star-glow)" }}>
-            {streak}<span className="text-xs font-bold text-muted ml-0.5">天</span>
-          </span>
-        </div>
-        <div className="flex flex-col items-center gap-0.5">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted">累计星星</span>
-          <span className="text-2xl font-black tabular-nums" style={{ color: "var(--star-bright)" }}>
-            {total}<span className="text-xs font-bold text-muted ml-0.5">颗</span>
-          </span>
-        </div>
+      {/* ── Stats card ── */}
+      <div className="sj-card w-full max-w-[320px] rounded-2xl mb-6 px-4 py-3.5 grid grid-cols-3 relative">
+        <Stat label="今日" value={todayCount} unit="颗" tone="bright" />
+        <div className="absolute left-1/3 top-3 bottom-3 w-px sj-divider" />
+        <Stat label="连续" value={streak} unit="天" tone="glow" />
+        <div className="absolute left-2/3 top-3 bottom-3 w-px sj-divider" />
+        <Stat label="累计" value={total} unit="颗" tone="muted" />
       </div>
 
       {/* ── Cylinder glass jar ── */}
       <div
         ref={jarRef}
-        className="relative mb-5 select-none cursor-pointer"
+        className="relative mb-6 select-none cursor-pointer transition-transform duration-300 hover:scale-[1.01]"
         style={{ width: 320, height: 420 }}
         onClick={onViewCalendar}
       >
         <svg
           viewBox="0 0 320 490"
           className="w-full h-full"
-          style={{
-            overflow: "visible",
-            filter: `drop-shadow(0 0 var(--glow-blur) rgba(var(--jar-glow-rgb), var(--glow-opacity)))`,
-            transition: "filter 0.8s ease",
-            "--glow-blur": `${jarGlowBlur}px`,
-            "--glow-opacity": jarGlowOpacity,
-          } as React.CSSProperties}
+          style={{ overflow: "visible" }}
         >
           <defs>
-            {/* Star glow filters */}
-            <filter id="sgStrong" x="-60%" y="-60%" width="220%" height="220%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b" />
+            {/* Star glow filters — 3 levels driven by entry char count */}
+            <filter id="sgDim" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <filter id="sgMid" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="3.2" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <filter id="sgBright" x="-65%" y="-65%" width="230%" height="230%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="b" />
               <feMerge>
                 <feMergeNode in="b" />
                 <feMergeNode in="b" />
@@ -200,138 +208,175 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
-            <filter id="sgSoft" x="-45%" y="-45%" width="190%" height="190%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b" />
-              <feMerge>
-                <feMergeNode in="b" />
-                <feMergeNode in="b" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
 
-            {/* Inner bottom glow */}
-            <radialGradient id="innerGlow" cx="50%" cy="95%" r="35%">
-              <stop offset="0%" stopColor="#fff4c0" stopOpacity="0.45" />
-              <stop offset="55%" stopColor="#e8a050" stopOpacity="0.08" />
-              <stop offset="100%" stopColor="#c07030" stopOpacity="0" />
-            </radialGradient>
-
-            {/* Glass fill */}
-            <linearGradient id="glass" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.12)" />
-              <stop offset="30%" stopColor="rgba(255,255,255,0.01)" />
-              <stop offset="65%" stopColor="rgba(255,248,235,0.03)" />
-              <stop offset="100%" stopColor="rgba(255,235,210,0.08)" />
+            {/* Glass body — vertical gradient, very subtle */}
+            <linearGradient id="glassBody" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--jar-glass-top)" />
+              <stop offset="50%" stopColor="var(--jar-glass-top)" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="var(--jar-glass-bot)" />
             </linearGradient>
 
-            {/* Jar interior clip — cylinder */}
+            {/* Inner shadow — top rim depth, fades within first third */}
+            <linearGradient id="rimShadow" x1="0" y1="50" x2="0" y2="180" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="var(--jar-inner-shadow)" stopOpacity="0.9" />
+              <stop offset="40%" stopColor="var(--jar-inner-shadow)" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="var(--jar-inner-shadow)" stopOpacity="0" />
+            </linearGradient>
+
+            {/* Left highlight — vertical glass shine */}
+            <linearGradient id="glassHl" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="rgba(255,255,255,0)" />
+              <stop offset="50%" stopColor="rgba(255,255,255,0.16)" />
+              <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+            </linearGradient>
+
+            {/* Inner bottom glow */}
+            <radialGradient id="innerGlow" cx="50%" cy="95%" r="38%">
+              <stop offset="0%" stopColor="var(--star-particle)" stopOpacity="0.45" />
+              <stop offset="55%" stopColor="var(--star-bright)" stopOpacity="0.08" />
+              <stop offset="100%" stopColor="var(--star-bright)" stopOpacity="0" />
+            </radialGradient>
+
+            {/* Outer haze — warm cream around jar */}
+            <radialGradient id="outerHaze" cx="50%" cy="55%" r="50%">
+              <stop offset="0%" stopColor="var(--jar-haze-strong)" />
+              <stop offset="55%" stopColor="var(--jar-haze-soft)" />
+              <stop offset="100%" stopColor="rgba(245,158,11,0)" />
+            </radialGradient>
+
             <clipPath id="jarInterior">
               <path d={cylinderClipPath} />
             </clipPath>
-
-            {/* Outer jar glow */}
-            <radialGradient id="outerGlow" cx="50%" cy="55%" r="50%">
-              <stop offset="0%" stopColor="rgba(251,191,36,0.15)" />
-              <stop offset="50%" stopColor="rgba(251,191,36,0.05)" />
-              <stop offset="100%" stopColor="rgba(251,191,36,0)" />
-            </radialGradient>
           </defs>
 
-          {/* Outer glow ring behind jar */}
-          <ellipse cx="160" cy="240" rx={140 + visibleStars * 2} ry={190 + visibleStars * 3}
-            fill="url(#outerGlow)"
-            opacity={Math.min(0.7, 0.08 + visibleStars * 0.025)}
-            style={{ transition: "opacity 0.8s ease" }}
+          {/* Outer haze halo */}
+          <ellipse
+            cx="160"
+            cy="240"
+            rx={160 * hazeScale}
+            ry={210 * hazeScale}
+            fill="url(#outerHaze)"
+            opacity={hazeOpacity}
+            style={{ transition: "opacity 0.8s ease, transform 0.8s ease" }}
           />
 
           {/* Stars clipped to jar interior */}
           <g clipPath="url(#jarInterior)">
-            {entriesWithPos.map((entry, idx) => {
+            {/* Inner bottom glow */}
+            <ellipse
+              cx="160"
+              cy={floor}
+              rx="110"
+              ry="16"
+              fill="url(#innerGlow)"
+              opacity={glow.inner.opacity}
+              style={{ transition: "opacity 0.8s ease" }}
+            />
+
+            {!isPouring && entriesWithPos.map((entry) => {
               const livePos = livePositions.get(entry.id) ?? (entry.position ? { x: entry.position.x, y: entry.position.y, r: entry.position.r, rot: entry.position.rot, vx: 0, vy: 0 } : null);
               if (!livePos) return null;
-              const isToday = entry.date === todayStr;
-              const color = starColor(idx, entriesWithPos.length);
+              const brightness = brightnessOf(entry.content);
+              const color = starFill(brightness);
+              const filterId = pickFilter(brightness);
+              const opacity = 0.45 + brightness * 0.55;
               const path = makeRoundedStarPath(livePos.x, livePos.y, livePos.r, livePos.rot);
               return (
-                <g key={entry.id} filter={isToday ? "url(#sgStrong)" : "url(#sgSoft)"}>
+                <g key={entry.id} filter={`url(#${filterId})`}>
                   <path
                     d={path}
                     fill={color}
-                    stroke="var(--jar-stroke)"
-                    strokeWidth="1.2"
-                    opacity={isToday ? 1 : 0.7 + (idx % 3) * 0.1}
-                    style={{ transition: "opacity 0.3s ease" }}
+                    opacity={opacity}
+                    style={{ transition: "opacity 0.3s ease, fill 0.3s ease" }}
                   />
                 </g>
               );
             })}
 
-            {/* Empty state */}
+            {/* Empty state — single dim star */}
             {visibleStars === 0 && (
-              <g opacity="0.15" style={{ animation: "galaxyBreathing 3.5s ease-in-out infinite" }}>
-                <path d={makeRoundedStarPath(160, 220, 26, 0)} fill="#fff8d0" filter="url(#sgSoft)" />
+              <g opacity="0.12" style={{ animation: "galaxyBreathing 4s ease-in-out infinite" }}>
+                <path d={makeRoundedStarPath(160, 230, 24, 0)} fill="var(--star-fill-mid)" filter="url(#sgMid)" />
               </g>
             )}
 
-            {/* Inner bottom glow */}
-            <ellipse cx="160" cy={floor} rx="100" ry="14"
-              fill="url(#innerGlow)" opacity={glow.inner.opacity}
-              style={{ transition: "opacity 0.8s ease" }}
-            />
+            {/* Sparkle particles — fewer and softer */}
+            {Array.from({ length: 8 }, (_, i) => {
+              const sx = left + 24 + ((i * 71 + 37) % (right - left - 48));
+              const sy = top + 40 + ((i * 63 + 29) % (floor - top - 60));
+              return (
+                <circle
+                  key={i}
+                  cx={sx}
+                  cy={sy}
+                  r={0.8 + (i % 4) * 0.4}
+                  fill="var(--sparkle-fill)"
+                  opacity="0"
+                  style={{ animation: `sparkleParticle ${3 + i * 0.5}s ease-in-out ${i * 0.5}s infinite` }}
+                />
+              );
+            })}
           </g>
 
-          {/* ── Cylinder glass body (open at top, rim ellipse closes it) ── */}
-          <path
-            d={cylinderBodyPath}
-            fill="url(#glass)"
-            stroke="var(--jar-stroke)"
-            strokeWidth="1.5"
-          />
+          {/* Glass body fill */}
+          <path d={cylinderClipPath} fill="url(#glassBody)" />
 
-          {/* ── Top rim (full ellipse, both front + back arcs visible through glass) ── */}
-          <ellipse cx="160" cy={top} rx={(right - left) / 2} ry="8"
+          {/* Inner top-rim shadow (depth) */}
+          <path d={cylinderClipPath} fill="url(#rimShadow)" opacity="0.65" clipPath="url(#jarInterior)" />
+
+          {/* Vertical highlight band — left */}
+          <rect x={left + 8} y={top + 12} width="3" height={floor - top - 30} fill="url(#glassHl)" opacity="0.7" rx="1.5" />
+
+          {/* Glass body stroke */}
+          <path
+            d={cylinderPath}
             fill="none"
             stroke="var(--jar-stroke)"
-            strokeWidth="1.5"
-          />
-          <ellipse cx="160" cy={top} rx={(right - left) / 2} ry="7"
-            fill="rgba(255,255,255,0.05)"
+            strokeWidth="1.25"
+            strokeLinejoin="round"
           />
 
-          {/* Sparkle particles */}
-          {Array.from({ length: 16 }, (_, i) => {
-            const sx = left + 15 + ((i * 71 + 37) % (right - left - 30));
-            const sy = top + 30 + ((i * 63 + 29) % (floor - top - 40));
-            return (
-              <circle key={i} cx={sx} cy={sy} r={1 + (i % 5) * 0.5}
-                fill="#fff8d0" opacity="0"
-                style={{ animation: `sparkleParticle ${2.5 + i * 0.4}s ease-in-out ${i * 0.32}s infinite` }}
-              />
-            );
-          })}
+          {/* Top rim ellipse */}
+          <ellipse
+            cx="160"
+            cy={top}
+            rx={(right - left) / 2}
+            ry="7"
+            fill="var(--jar-rim-fill)"
+            stroke="var(--jar-stroke)"
+            strokeWidth="1.25"
+          />
+          {/* Inner rim hairline */}
+          <ellipse
+            cx="160"
+            cy={top + 1.5}
+            rx={(right - left) / 2 - 4}
+            ry="4.5"
+            fill="none"
+            stroke="var(--jar-stroke-soft)"
+            strokeWidth="0.8"
+          />
         </svg>
 
         {/* ── Pour button (visible at 30 stars) ── */}
         {visibleStars >= 30 && !isPouring && (
           <button
             onClick={(e) => { e.stopPropagation(); handlePour(); }}
-            className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-black
-              bg-amber-500/90 text-white shadow-lg shadow-amber-500/30
-              hover:bg-amber-400 active:scale-95 transition-all duration-200
-              animate-bounce"
-            style={{ zIndex: 10 }}
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg active:scale-95 transition-all duration-200"
+            style={{
+              background: "linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)",
+              boxShadow: "0 4px 14px rgba(245,158,11,0.4), inset 0 1px 0 rgba(255,255,255,0.25)",
+              zIndex: 10,
+            }}
           >
-            <Zap size={16} /> 倾倒星星
+            <Sparkles size={14} /> 倾倒星星
           </button>
         )}
       </div>
 
       {/* ── Pour-out scatter overlay ── */}
       {isPouring && pourStars.length > 0 && (
-        <div
-          className="fixed inset-0 pointer-events-none"
-          style={{ zIndex: 100 }}
-        >
+        <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 100 }}>
           {pourStars.map((ps) => (
             <div
               key={ps.id}
@@ -341,35 +386,22 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
                 top: `${pourOrigin.y + ps.fromY}px`,
                 width: 0,
                 height: 0,
-                animation: `pourOut ${ps.duration}s cubic-bezier(0.25,0.1,0.25,1) ${ps.delay}s forwards`,
+                animation: `pourFall ${ps.duration}s linear ${ps.delay}s forwards`,
+                filter: `drop-shadow(0 0 6px rgba(245,200,90,0.55))`,
                 "--tx": `${ps.tx}px`,
-                "--ty": `${ps.ty}px`,
+                "--peak": `${ps.peak}px`,
+                "--spin": `${ps.spin}deg`,
               } as React.CSSProperties}
             >
               <svg
                 width={ps.r * 2}
                 height={ps.r * 2}
                 viewBox={`0 0 ${ps.r * 2} ${ps.r * 2}`}
-                style={{
-                  transform: "translate(-50%, -50%)",
-                  animation: `pourFlash 0.35s ease-in-out ${ps.delay}s infinite`,
-                }}
+                style={{ transform: "translate(-50%, -50%)" }}
               >
-                <defs>
-                  <filter id={`ps-${ps.id}`} x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b" />
-                    <feMerge>
-                      <feMergeNode in="b" />
-                      <feMergeNode in="b" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                </defs>
                 <path
                   d={makeRoundedStarPath(ps.r, ps.r, ps.r, ps.rot)}
                   fill={ps.color}
-                  filter={`url(#ps-${ps.id})`}
-                  opacity="0.9"
                 />
               </svg>
             </div>
@@ -377,44 +409,75 @@ export function StarJarView({ entries, todayCount, streak, onViewCalendar, onAdd
         </div>
       )}
 
-      {/* ── Bottom input bar (hidden during pour) ── */}
+      {/* ── Input bar + clear ── */}
       {!isPouring && (
         <>
-          <div className="w-full max-w-[320px] flex items-center gap-2 mb-3">
-            <div className="flex-1 relative">
-              <input
-                ref={inputRef}
-                type="text"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
-                placeholder="今天有什么开心的事？"
-                className="w-full rounded-2xl bg-card/80 backdrop-blur px-4 py-3 text-sm font-bold text-primary outline-none ring-1 ring-subtle focus:ring-2 focus:ring-amber-400/40 placeholder:text-faint/60 transition-all duration-300"
-              />
-            </div>
+          <div className="w-full max-w-[340px] flex items-center gap-2 mb-3">
+            <input
+              ref={inputRef}
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+              placeholder="今天有什么开心的事？"
+              className="sj-input flex-1 rounded-full px-5 py-3 text-[14px] font-medium text-primary outline-none placeholder:text-faint/70"
+            />
             <button
               onClick={handleSend}
               disabled={!text.trim() || sending}
-              className="grid h-11 w-11 place-items-center rounded-2xl transition-all duration-200 active:scale-90 disabled:opacity-30 shrink-0 shadow-lg shadow-amber-500/10"
-              style={{ background: "var(--star-bright)", color: "#1c1c1e" }}
+              aria-label="添加心情"
+              className="grid h-11 w-11 place-items-center rounded-full transition-all duration-200 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+              style={{
+                background: text.trim()
+                  ? "linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)"
+                  : "var(--bg-surface)",
+                color: text.trim() ? "#1c1c1e" : "var(--text-muted)",
+                boxShadow: text.trim()
+                  ? "0 4px 12px rgba(245,158,11,0.35), inset 0 1px 0 rgba(255,255,255,0.3)"
+                  : "none",
+              }}
             >
-              <Send size={18} />
+              <ArrowUp size={18} strokeWidth={2.5} />
             </button>
           </div>
 
-          {/* ── Clear button ── */}
           <button
             onClick={async () => {
               if (!confirm("清空所有星星？此操作不可撤销。")) return;
               await onReset();
             }}
             disabled={total === 0}
-            className="flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold text-muted/50 hover:text-red-400/80 transition-colors duration-200 disabled:opacity-20 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-medium text-faint hover:text-red-500/80 transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            <Trash2 size={13} /> 清空全部星星
+            <Trash2 size={11} /> 清空全部
           </button>
         </>
       )}
+    </div>
+  );
+}
+
+// ── Sub-components ──
+
+interface StatProps {
+  label: string;
+  value: number;
+  unit: string;
+  tone: "bright" | "glow" | "muted";
+}
+
+function Stat({ label, value, unit, tone }: StatProps) {
+  const color =
+    tone === "bright" ? "var(--star-bright)"
+    : tone === "glow" ? "var(--star-glow)"
+    : "var(--text-primary)";
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <span className="text-[10px] font-semibold tracking-wider text-muted">{label}</span>
+      <span className="text-xl font-bold tabular-nums leading-tight" style={{ color }}>
+        {value}
+        <span className="text-[11px] font-semibold text-muted ml-0.5">{unit}</span>
+      </span>
     </div>
   );
 }

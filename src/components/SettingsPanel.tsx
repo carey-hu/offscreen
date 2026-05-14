@@ -1,6 +1,16 @@
-import { Bell, Cloud, Download, Eraser, Palette, Smartphone, Timer } from "lucide-react";
+import { Bell, Check, Cloud, CloudOff, Download, Eraser, Loader2, Palette, RefreshCw, Smartphone, Timer, TriangleAlert } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { zhCN } from "date-fns/locale";
 import { FocusMode, FocusSession, UserSettings } from "../types";
-import { isCloudSyncAvailable, pullCloudSessions, pushLocalSessionsToCloud } from "../lib/cloudSync";
+import { isCloudSyncAvailable } from "../lib/cloudSync";
+import type { SyncStatus } from "../hooks/useSync";
+
+interface SyncState {
+  status: SyncStatus;
+  lastSyncAt: Date | null;
+  error: string | null;
+  syncNow: () => Promise<void>;
+}
 
 interface Props {
   sessions: FocusSession[];
@@ -8,6 +18,7 @@ interface Props {
   onUpdateSettings: (patch: Partial<UserSettings>) => Promise<void> | void;
   onClear: () => Promise<void>;
   onRefresh: () => Promise<void>;
+  sync: SyncState;
 }
 
 const MODE_LABELS: Record<FocusMode, string> = {
@@ -22,7 +33,7 @@ export function SettingsPanel({
   settings,
   onUpdateSettings,
   onClear,
-  onRefresh
+  sync
 }: Props) {
   function exportJson() {
     const blob = new Blob([JSON.stringify(sessions, null, 2)], {
@@ -34,16 +45,6 @@ export function SettingsPanel({
     a.download = `openfocus-sessions-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }
-
-  async function demoSync() {
-    const userId = prompt("输入测试 user_id。正式版应替换为登录用户 ID。");
-    if (!userId) return;
-
-    await pushLocalSessionsToCloud(userId);
-    await pullCloudSessions(userId);
-    await onRefresh();
-    alert("同步完成。");
   }
 
   async function toggleNotifications() {
@@ -165,27 +166,74 @@ export function SettingsPanel({
             <span className="text-red-500 group-hover:text-red-400">清空本地数据</span>
           </button>
 
-          <button
-            onClick={demoSync}
-            disabled={!isCloudSyncAvailable()}
-            className="settings-btn disabled:cursor-not-allowed disabled:opacity-30"
-          >
-            <Cloud size={18} />
-            <span>Supabase 云同步测试</span>
-          </button>
+          <SyncSection sync={sync} />
 
           <div className="settings-btn cursor-default">
             <Smartphone size={18} />
             <span>PWA 可添加到手机桌面</span>
           </div>
         </div>
-
-        {!isCloudSyncAvailable() ? (
-          <div className="mt-6 rounded-[1.25rem] bg-surface p-5 text-[11px] font-bold uppercase tracking-wider text-muted leading-relaxed">
-            Cloud sync requires Supabase configuration.
-          </div>
-        ) : null}
       </section>
+    </div>
+  );
+}
+
+function SyncSection({ sync }: { sync: SyncState }) {
+  const available = isCloudSyncAvailable();
+
+  if (!available) {
+    return (
+      <div className="settings-btn cursor-default">
+        <CloudOff size={18} className="text-muted" />
+        <div className="flex-1">
+          <div className="text-sm font-semibold text-secondary">云同步未配置</div>
+          <div className="text-[11px] font-medium text-faint mt-0.5">
+            填写 .env 里的 VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY / VITE_USER_ID 并重启 dev
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const { status, lastSyncAt, error, syncNow } = sync;
+
+  const icon =
+    status === "syncing" ? <Loader2 size={18} className="animate-spin text-indigo-400" /> :
+    status === "error"   ? <TriangleAlert size={18} className="text-red-500" /> :
+    status === "offline" ? <CloudOff size={18} className="text-muted" /> :
+                           <Cloud size={18} className="text-emerald-500" />;
+
+  const statusLabel =
+    status === "syncing" ? "同步中…" :
+    status === "error"   ? "同步失败" :
+    status === "offline" ? "未配置" :
+    lastSyncAt           ? `上次同步 ${formatDistanceToNow(lastSyncAt, { locale: zhCN, addSuffix: true })}` :
+                           "尚未同步";
+
+  return (
+    <div className="rounded-[1.5rem] px-5 py-4" style={{ background: "var(--bg-surface)" }}>
+      <div className="flex items-center gap-3">
+        <div className="shrink-0">{icon}</div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold text-secondary">云同步</div>
+          <div className="text-[11px] font-medium text-faint mt-0.5 truncate">
+            {statusLabel}
+          </div>
+        </div>
+        <button
+          onClick={() => { syncNow(); }}
+          disabled={status === "syncing"}
+          className="grid h-9 w-9 place-items-center rounded-full bg-card text-secondary hover:text-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
+          title="立即同步"
+        >
+          {status === "idle" && lastSyncAt ? <Check size={14} /> : <RefreshCw size={14} />}
+        </button>
+      </div>
+      {status === "error" && error && (
+        <div className="mt-3 rounded-xl bg-red-500/10 p-2.5 text-[11px] font-medium text-red-500 break-words">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

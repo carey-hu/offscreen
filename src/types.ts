@@ -27,6 +27,7 @@ export interface Task {
   description: string;
   tag: string;
   plannedMinutes?: number;
+  updatedAt?: string;
 }
 
 export interface UserSettings {
@@ -36,6 +37,7 @@ export interface UserSettings {
   longFocusMinutes: number;
   theme: "system" | "light" | "dark";
   notificationEnabled: boolean;
+  updatedAt?: string;
 }
 
 export interface TaskNote {

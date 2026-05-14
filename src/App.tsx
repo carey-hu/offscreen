@@ -17,14 +17,15 @@ import { useSettings } from "./hooks/useSettings";
 import { useTasks } from "./hooks/useTasks";
 import { useMoodEntries } from "./hooks/useMoodEntries";
 import { useThemeApplier } from "./hooks/useThemeApplier";
+import { useSync } from "./hooks/useSync";
 import { TimerProvider } from "./contexts/TimerContext";
 import { Task } from "./types";
 
 export default function App() {
-  const { sessions, upsert: upsertSession, remove: removeSession, clear, refresh } = useSessions();
-  const { tasks, upsert: upsertTask, remove: removeTask } = useTasks();
-  const { settings, update: updateSettings } = useSettings();
-  const { entries: moodEntries, upsert: upsertMood, remove: removeMood } = useMoodEntries();
+  const { sessions, upsert: upsertSession, remove: removeSession, clear, refresh: refreshSessions } = useSessions();
+  const { tasks, upsert: upsertTask, remove: removeTask, refresh: refreshTasks } = useTasks();
+  const { settings, update: updateSettings, refresh: refreshSettings } = useSettings();
+  const { entries: moodEntries, upsert: upsertMood, remove: removeMood, refresh: refreshMoods } = useMoodEntries();
   const [activeTab, setActiveTab] = useState<"stats" | "focus" | "settings" | "starjar">("focus");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -33,6 +34,17 @@ export default function App() {
   const [sessionHistoryOpen, setSessionHistoryOpen] = useState(false);
 
   useThemeApplier(settings.theme);
+
+  const refreshAll = useCallback(async () => {
+    await Promise.all([
+      refreshSessions(),
+      refreshTasks(),
+      refreshSettings(),
+      refreshMoods()
+    ]);
+  }, [refreshSessions, refreshTasks, refreshSettings, refreshMoods]);
+
+  const sync = useSync({ onSynced: refreshAll });
 
   function shiftDate(days: number) {
     const next = new Date(selectedDate);
@@ -185,7 +197,8 @@ export default function App() {
                   settings={settings}
                   onUpdateSettings={updateSettings}
                   onClear={clear}
-                  onRefresh={refresh}
+                  onRefresh={refreshSessions}
+                  sync={sync}
                 />
               ) : (
                 <ScreenTimePanel sessions={sessions} selectedDate={selectedDate} />

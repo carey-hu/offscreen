@@ -150,6 +150,11 @@ export async function getTaskNotes(taskId: string): Promise<TaskNote[]> {
   return (result ?? []).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+export async function getAllTaskNotes(): Promise<TaskNote[]> {
+  const result = await tx<TaskNote[]>(TASK_NOTE_STORE, "readonly", (store) => store.getAll());
+  return result ?? [];
+}
+
 export async function getNotesByDate(date: string): Promise<TaskNote[]> {
   const result = await tx<TaskNote[]>(TASK_NOTE_STORE, "readonly", (store) => {
     const index = store.index("date");

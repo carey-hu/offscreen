@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { FocusSession } from "../types";
 import { clearSessions, deleteSession, getSessions, saveSession } from "../lib/storage";
+import { deleteCloudSession, pushSession } from "../lib/cloudSync";
 
 export function useSessions() {
   const [sessions, setSessions] = useState<FocusSession[]>([]);
@@ -16,6 +17,7 @@ export function useSessions() {
   const upsert = useCallback(
     async (session: FocusSession) => {
       await saveSession(session);
+      pushSession(session);
       await refresh();
     },
     [refresh]
@@ -24,13 +26,16 @@ export function useSessions() {
   const remove = useCallback(
     async (id: string) => {
       await deleteSession(id);
+      deleteCloudSession(id);
       await refresh();
     },
     [refresh]
   );
 
   const clear = useCallback(async () => {
+    const all = await getSessions();
     await clearSessions();
+    for (const s of all) deleteCloudSession(s.id);
     await refresh();
   }, [refresh]);
 

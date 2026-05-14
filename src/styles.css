@@ -180,28 +180,107 @@ body {
 /* ── Star Jar ── */
 
 :root {
-  --star-glow: #fbbf24;
+  /* Star palette — warm gold, refined */
+  --star-glow: #f59e0b;
   --star-bright: #f59e0b;
-  --star-dim: #d97706;
+  --star-dim: #b45309;
   --star-particle: #fde68a;
-  --jar-glass: rgba(251, 191, 36, 0.08);
-  --jar-rim: rgba(251, 191, 36, 0.3);
-  /* Light mode jar — darker strokes for visibility */
-  --jar-stroke: rgba(160, 110, 35, 0.28);
-  --jar-stroke-neck: rgba(160, 110, 35, 0.22);
-  --jar-hl-left: rgba(255, 255, 255, 0.45);
-  --jar-hl-right: rgba(255, 255, 255, 0.16);
-  --jar-glow-rgb: 180, 140, 80;
+  --star-fill-top: #fef3c7;
+  --star-fill-mid: #fcd34d;
+  --star-fill-bot: #f59e0b;
+
+  /* Jar glass — soft neutral hairlines, not amber */
+  --jar-glass-top: rgba(28, 28, 30, 0.025);
+  --jar-glass-bot: rgba(180, 130, 40, 0.04);
+  --jar-stroke: rgba(28, 28, 30, 0.14);
+  --jar-stroke-soft: rgba(28, 28, 30, 0.08);
+  --jar-rim-fill: rgba(255, 255, 255, 0.55);
+  --jar-inner-shadow: rgba(28, 28, 30, 0.08);
+
+  /* Outer haze — warm cream */
+  --jar-glow-rgb: 245, 158, 11;
+  --jar-haze-strong: rgba(245, 158, 11, 0.10);
+  --jar-haze-soft: rgba(245, 158, 11, 0.03);
+
+  /* Sparkle particles */
+  --sparkle-fill: rgba(245, 158, 11, 0.85);
+
+  /* Star-jar material card — translucent w/ hairline */
+  --sj-card-bg: rgba(255, 255, 255, 0.72);
+  --sj-card-border: rgba(28, 28, 30, 0.06);
+  --sj-divider: rgba(28, 28, 30, 0.08);
+  --sj-pill-bg: rgba(245, 158, 11, 0.08);
+  --sj-pill-bg-strong: rgba(245, 158, 11, 0.14);
+  --sj-input-bg: rgba(255, 255, 255, 0.78);
+  --sj-input-ring: rgba(28, 28, 30, 0.08);
+  --sj-input-ring-focus: rgba(245, 158, 11, 0.45);
+  --sj-cell-empty: rgba(28, 28, 30, 0.025);
+  --sj-cell-today: rgba(245, 158, 11, 0.10);
+
+  --sj-shadow-soft: 0 1px 2px rgba(28, 28, 30, 0.04), 0 8px 24px rgba(28, 28, 30, 0.06);
+  --sj-shadow-float: 0 4px 12px rgba(28, 28, 30, 0.06), 0 12px 32px rgba(28, 28, 30, 0.08);
 }
 
 :root.dark {
-  --jar-glass: rgba(251, 191, 36, 0.05);
-  --jar-rim: rgba(251, 191, 36, 0.2);
-  --jar-stroke: rgba(255, 255, 255, 0.22);
-  --jar-stroke-neck: rgba(255, 255, 255, 0.18);
-  --jar-hl-left: rgba(255, 255, 255, 0.45);
-  --jar-hl-right: rgba(255, 255, 255, 0.16);
+  --star-glow: #fbbf24;
+  --star-bright: #fbbf24;
+  --star-dim: #d97706;
+  --star-particle: #fde68a;
+  --star-fill-top: #fef3c7;
+  --star-fill-mid: #fbbf24;
+  --star-fill-bot: #d97706;
+
+  --jar-glass-top: rgba(255, 255, 255, 0.04);
+  --jar-glass-bot: rgba(251, 191, 36, 0.05);
+  --jar-stroke: rgba(255, 255, 255, 0.18);
+  --jar-stroke-soft: rgba(255, 255, 255, 0.08);
+  --jar-rim-fill: rgba(255, 255, 255, 0.06);
+  --jar-inner-shadow: rgba(0, 0, 0, 0.35);
+
   --jar-glow-rgb: 251, 191, 36;
+  --jar-haze-strong: rgba(251, 191, 36, 0.14);
+  --jar-haze-soft: rgba(251, 191, 36, 0.04);
+
+  --sparkle-fill: rgba(253, 230, 138, 0.85);
+
+  --sj-card-bg: rgba(34, 34, 43, 0.72);
+  --sj-card-border: rgba(255, 255, 255, 0.06);
+  --sj-divider: rgba(255, 255, 255, 0.08);
+  --sj-pill-bg: rgba(251, 191, 36, 0.10);
+  --sj-pill-bg-strong: rgba(251, 191, 36, 0.18);
+  --sj-input-bg: rgba(42, 42, 53, 0.72);
+  --sj-input-ring: rgba(255, 255, 255, 0.08);
+  --sj-input-ring-focus: rgba(251, 191, 36, 0.55);
+  --sj-cell-empty: rgba(255, 255, 255, 0.03);
+  --sj-cell-today: rgba(251, 191, 36, 0.14);
+
+  --sj-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --sj-shadow-float: 0 4px 12px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* Star-jar component primitives */
+.sj-card {
+  background: var(--sj-card-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--sj-card-border);
+  box-shadow: var(--sj-shadow-soft);
+}
+
+.sj-divider {
+  background: var(--sj-divider);
+}
+
+.sj-input {
+  background: var(--sj-input-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--sj-input-ring);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.sj-input:focus {
+  border-color: var(--sj-input-ring-focus);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
 }
 
 /* ── Star Jar Animations ── */
@@ -231,8 +310,13 @@ body {
 
 @keyframes sparkleParticle {
   0%, 100% { opacity: 0; transform: scale(0.3); }
-  30% { opacity: 0.9; transform: scale(1.1); }
-  60% { opacity: 0.5; transform: scale(0.8); }
+  35% { opacity: 0.55; transform: scale(1); }
+  65% { opacity: 0.28; transform: scale(0.8); }
+}
+
+@keyframes sjFadeUp {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes galaxyBreathing {
@@ -262,28 +346,30 @@ body {
 
 /* ── Pour-out animation ── */
 
-@keyframes pourOut {
+/* Parabolic fall — stars leap slightly out of jar then fall with gravity */
+@keyframes pourFall {
   0% {
-    transform: translate(0, 0) scale(1);
+    transform: translate(0, 0) rotate(0deg);
     opacity: 1;
   }
   10% {
+    transform: translate(calc(var(--tx) * 0.10), var(--peak)) rotate(calc(var(--spin) * 0.10));
     opacity: 1;
   }
-  60% {
-    opacity: 0.7;
-  }
-  100% {
-    transform: translate(var(--tx), var(--ty)) scale(0.15);
-    opacity: 0;
-  }
-}
-
-@keyframes pourFlash {
-  0%, 100% {
+  25% {
+    transform: translate(calc(var(--tx) * 0.25), 25px) rotate(calc(var(--spin) * 0.25));
     opacity: 1;
   }
   50% {
-    opacity: 0.2;
+    transform: translate(calc(var(--tx) * 0.50), 170px) rotate(calc(var(--spin) * 0.50));
+    opacity: 1;
+  }
+  75% {
+    transform: translate(calc(var(--tx) * 0.75), 420px) rotate(calc(var(--spin) * 0.75));
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(var(--tx), 800px) rotate(var(--spin));
+    opacity: 0;
   }
 }
