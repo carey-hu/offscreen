@@ -1,4 +1,4 @@
-import { RotateCcw, ChevronDown, Coffee } from "lucide-react";
+import { RotateCcw, ChevronDown, Coffee, Check } from "lucide-react";
 import { FocusMode } from "../types";
 import { WheelPicker } from "./WheelPicker";
 import { useTimer } from "../contexts/TimerContext";
@@ -24,37 +24,49 @@ export function TimerPanel() {
     <div className="flex flex-col items-center">
       <div className="flex items-center gap-2 mb-6 sm:mb-8 max-w-full">
         {editing ? (
-          <div className="flex items-center gap-2 bg-card px-3 sm:px-4 py-2 rounded-xl text-xs font-bold">
+          <div className="flex items-center gap-2 bg-card pl-3.5 sm:pl-4 pr-1.5 py-2 rounded-2xl shadow-sm ring-1 ring-subtle">
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-faint shrink-0">
+              专注
+            </span>
+            <span className="h-3.5 w-px bg-subtle shrink-0" />
             <input
               value={t.title}
               onChange={(e) => t.setTitle(e.target.value)}
-              className="bg-transparent text-primary outline-none w-24 sm:w-28"
+              className="bg-transparent text-primary text-[13px] sm:text-sm font-semibold outline-none w-24 sm:w-32 placeholder:text-faint"
               placeholder="标题"
             />
-            <span className="text-faint">·</span>
             <input
               value={t.tag}
               onChange={(e) => t.setTag(e.target.value)}
-              className="bg-transparent text-[var(--accent-text)] outline-none w-16 sm:w-20"
+              className="bg-transparent text-[var(--accent-text)] text-[13px] sm:text-sm font-semibold outline-none w-16 sm:w-20 placeholder:text-faint"
               placeholder="标签"
             />
             <button
               onClick={() => setEditing(false)}
-              className="ml-2 text-muted hover:text-primary"
+              className="grid h-7 w-7 place-items-center rounded-full bg-indigo-500/15 text-[var(--accent-text)] hover:bg-indigo-500/25 transition active:scale-95"
+              aria-label="完成"
             >
-              ✓
+              <Check size={13} strokeWidth={2.75} />
             </button>
           </div>
         ) : (
           <button
             onClick={() => setEditing(true)}
             disabled={t.running}
-            className="flex items-center gap-2 bg-card px-3 sm:px-4 py-2 rounded-xl text-xs font-bold text-muted hover:text-primary transition disabled:opacity-60 max-w-full"
+            className="group flex items-center gap-2.5 bg-card pl-3.5 sm:pl-4 pr-3 sm:pr-3.5 py-2.5 rounded-2xl shadow-sm ring-1 ring-subtle hover:shadow-md transition disabled:opacity-60 disabled:hover:shadow-sm max-w-full"
           >
-            <span className="shrink-0">专注于</span>
-            <span className="text-primary truncate max-w-[120px] sm:max-w-[200px]">{t.title}</span>
-            <span className="text-[var(--accent-text)] truncate max-w-[80px]">#{t.tag}</span>
-            <ChevronDown size={14} className="shrink-0" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-faint shrink-0">
+              专注
+            </span>
+            <span className="h-3.5 w-px bg-subtle shrink-0" />
+            <span className="text-[13px] sm:text-sm font-semibold text-primary truncate max-w-[140px] sm:max-w-[220px]">
+              {t.title}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2 py-[2px] text-[11px] font-semibold text-[var(--accent-text)] shrink-0">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent-text)]" />
+              {t.tag}
+            </span>
+            <ChevronDown size={13} className="text-muted group-hover:text-primary transition shrink-0" strokeWidth={2.5} />
           </button>
         )}
       </div>

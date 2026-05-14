@@ -76,7 +76,7 @@ export default function App() {
   return (
     <TimerProvider settings={settings} onSave={upsertSession} onEnsureTask={ensureTask}>
       <main className="min-h-screen bg-page text-primary selection:bg-indigo-500/30">
-        <header className="relative flex items-center justify-center gap-3 px-4 sm:px-8 py-4 sm:py-6">
+        <header className="relative flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 px-4 sm:px-8 py-4 sm:py-6">
           <nav className="w-full sm:w-auto flex items-center justify-center bg-card p-1 rounded-2xl shadow-xl">
             <button
               onClick={() => setActiveTab("stats")}
@@ -120,7 +120,7 @@ export default function App() {
             </button>
           </nav>
 
-          <div className="absolute right-4 sm:right-8 flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center justify-end gap-2 sm:gap-4 sm:absolute sm:right-4 lg:right-8">
             <div className="flex items-center gap-2 sm:gap-3 bg-card px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-secondary shadow-lg">
               <button
                 onClick={() => shiftDate(-1)}
@@ -132,7 +132,7 @@ export default function App() {
                 {format(selectedDate, "M月d日 EEEE", { locale: zhCN })}
               </span>
               <span className="sm:hidden">
-                {format(selectedDate, "M月d日", { locale: zhCN })}
+                {format(selectedDate, "M月d日 EEEE", { locale: zhCN })}
               </span>
               <button
                 onClick={() => shiftDate(1)}

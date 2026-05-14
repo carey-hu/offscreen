@@ -8,6 +8,9 @@ interface StartOverrides {
   tag?: string;
   mode?: FocusMode;
   minutes?: number;
+  // Skip the ensureTask call entirely. Used for short-break sessions, which
+  // shouldn't pollute the task list — break is an activity, not a task.
+  skipTaskLink?: boolean;
 }
 
 interface EnsureTaskInput {
@@ -195,7 +198,11 @@ export function TimerProvider({ children, settings, onSave, onEnsureTask }: Prov
       const nextMinutes =
         overrides?.minutes != null ? overrides.minutes : hours * 60 + minutes;
 
-      // Apply state updates (direct, bypass setters so taskId stays intact)
+      // Apply ALL visible state synchronously BEFORE any await. Otherwise the
+      // microtask boundary inside `await onEnsureTask` lets React commit a
+      // render where `running` is still false; the `[settings,mode,running]`
+      // useEffect then fires and overwrites `minutes` with the mode default
+      // (30 for countdown), so the short-break button ended up timing 30min.
       if (overrides?.title) setTitleState(overrides.title);
       if (overrides?.tag) setTagState(overrides.tag);
       if (overrides?.mode) setModeState(nextMode);
@@ -203,17 +210,6 @@ export function TimerProvider({ children, settings, onSave, onEnsureTask }: Prov
         setHours(Math.floor(overrides.minutes / 60));
         setMinutes(overrides.minutes % 60);
       }
-
-      // Resolve / ensure task link
-      let resolvedTaskId = overrides?.taskId ?? taskId;
-      if (!resolvedTaskId) {
-        resolvedTaskId = await onEnsureTask({
-          title: nextTitle,
-          tag: nextTag,
-          plannedMinutes: nextMode === "stopwatch" ? 25 : nextMinutes || 25
-        });
-      }
-      setTaskId(resolvedTaskId);
 
       sessionIdRef.current = crypto.randomUUID();
       const startTs = Date.now();
@@ -223,6 +219,22 @@ export function TimerProvider({ children, settings, onSave, onEnsureTask }: Prov
       setRunning(true);
       setPaused(false);
       setNow(startTs);
+
+      // Resolve / ensure task link AFTER running is set. Short-break sessions
+      // pass skipTaskLink so we never create a "短休息" task row.
+      if (overrides?.skipTaskLink) {
+        setTaskId(null);
+        return;
+      }
+      let resolvedTaskId = overrides?.taskId ?? taskId;
+      if (!resolvedTaskId) {
+        resolvedTaskId = await onEnsureTask({
+          title: nextTitle,
+          tag: nextTag,
+          plannedMinutes: nextMode === "stopwatch" ? 25 : nextMinutes || 25
+        });
+      }
+      setTaskId(resolvedTaskId);
     },
     [mode, title, tag, hours, minutes, taskId, onEnsureTask]
   );
@@ -247,7 +259,8 @@ export function TimerProvider({ children, settings, onSave, onEnsureTask }: Prov
       mode: "countdown",
       minutes: settings.shortBreakMinutes,
       title: "短休息",
-      tag: "休息"
+      tag: "休息",
+      skipTaskLink: true
     });
   }, [start, settings.shortBreakMinutes]);
 

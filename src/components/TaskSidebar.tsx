@@ -63,18 +63,25 @@ export function TaskSidebar({
               }`}
               style={isActive ? { boxShadow: `inset 0 0 0 2px ${accent}` } : undefined}
             >
-              {/* Left accent stripe */}
+              {/* iOS-style inset pill indicator. Inset from edges + rounded
+                  so it reads as an intentional accent, not a bleeding stripe.
+                  Glow halo gives light-mode pop without darkening the card. */}
               <span
-                className="absolute left-0 top-0 bottom-0 w-1"
-                style={{ background: accent }}
+                aria-hidden
+                className="pointer-events-none absolute left-2 top-4 bottom-4 w-[3px] rounded-full transition-opacity duration-200"
+                style={{
+                  background: accent,
+                  opacity: isActive ? 1 : 0.9,
+                  boxShadow: `0 0 10px ${accent}40`
+                }}
               />
 
-              <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1 pl-1">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1 pl-3">
                 <div
                   className="grid h-12 w-12 sm:h-[52px] sm:w-[52px] place-items-center rounded-2xl text-xl sm:text-[22px] shrink-0"
                   style={{
-                    background: `${accent}1F`,
-                    boxShadow: `inset 0 0 0 1px ${accent}33`
+                    background: `${accent}26`,
+                    boxShadow: `inset 0 0 0 1px ${accent}40`
                   }}
                 >
                   {task.icon}
