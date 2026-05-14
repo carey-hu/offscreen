@@ -75,7 +75,7 @@ export default function App() {
 
   return (
     <TimerProvider settings={settings} onSave={upsertSession} onEnsureTask={ensureTask}>
-      <main className="min-h-screen bg-page text-primary selection:bg-indigo-500/30">
+      <main className="app-shell min-h-screen bg-page text-primary selection:bg-indigo-500/30">
         <header className="relative flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 px-4 sm:px-8 py-4 sm:py-6">
           <div className="order-first flex items-center justify-end gap-2 sm:gap-4 sm:absolute sm:right-4 lg:right-8 sm:order-none">
             <div className="flex items-center gap-2 sm:gap-3 bg-card px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-secondary shadow-lg">

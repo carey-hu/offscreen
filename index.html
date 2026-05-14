@@ -4,7 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="theme-color" content="#1a1a22" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#f4f4f7" media="(prefers-color-scheme: light)" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- viewport: disable pinch-zoom + extend under notch for app feel -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <!-- iOS standalone mode: hides Safari chrome when launched from home screen -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="OpenFocus" />
+    <!-- prevent iOS from auto-linking numbers (timer digits) as phone calls -->
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="apple-touch-icon" href="/icons/icon.svg" />
+
     <title>OpenFocus</title>
     <script>
       (function () {
