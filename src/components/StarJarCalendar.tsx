@@ -12,7 +12,7 @@ import {
 } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { MoodEntry } from "../types";
 import { makeRoundedStarPath } from "../lib/starPath";
 
@@ -55,7 +55,7 @@ export function StarJarCalendar({ entries, onSelectDate, onBack }: Props) {
   const [cursor, setCursor] = useState(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
 
-  const countMap = entryCountByDate(entries);
+  const countMap = useMemo(() => entryCountByDate(entries), [entries]);
   const monthStart = startOfMonth(cursor);
   const monthEnd = endOfMonth(cursor);
 

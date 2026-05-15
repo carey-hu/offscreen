@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { TimerPanel } from "./components/TimerPanel";
 import { StatsPanel } from "./components/StatsPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -45,6 +45,10 @@ export default function App() {
   }, [refreshSessions, refreshTasks, refreshSettings, refreshMoods]);
 
   const sync = useSync({ onSynced: refreshAll });
+  const todayMoodCount = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return moodEntries.filter((e) => e.date === today).length;
+  }, [moodEntries]);
 
   function shiftDate(days: number) {
     const next = new Date(selectedDate);
@@ -184,7 +188,7 @@ export default function App() {
                       summaryOnly
                       onOpenFocusStats={() => setFocusStatsOpen(true)}
                       onOpenSessionHistory={() => setSessionHistoryOpen(true)}
-                      moodTodayCount={moodEntries.filter((e) => e.date === new Date().toISOString().slice(0, 10)).length}
+                      moodTodayCount={todayMoodCount}
                       onOpenStarJar={() => setActiveTab("starjar")}
                     />
                   </>

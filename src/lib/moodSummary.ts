@@ -16,7 +16,7 @@ const NEGATIVE = [
   "失败", "糟糕", "讨厌", "烦人", "不舒服", "伤心"
 ];
 
-export function generateMoodSummary(entries: MoodEntry[], date: string): string {
+export function generateMoodSummary(entries: MoodEntry[], _date: string): string {
   const count = entries.length;
   if (count === 0) return "";
 

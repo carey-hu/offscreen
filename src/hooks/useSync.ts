@@ -50,7 +50,6 @@ export function useSync({ onSynced }: Options) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
       setStatus("error");
-      // eslint-disable-next-line no-console
       console.warn("[sync]", msg);
     } finally {
       inFlight.current = false;

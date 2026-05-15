@@ -15,6 +15,7 @@ import {
 import { FocusSession } from "../types";
 import { completedSessions, tagStats } from "../lib/stats";
 import { tagColor } from "../lib/colors";
+import { useMemo } from "react";
 
 interface Props {
   sessions: FocusSession[];
@@ -29,36 +30,46 @@ const TOOLTIP_STYLE = {
 } as const;
 
 export function ScreenTimePanel({ sessions, selectedDate }: Props) {
-  const day = sessions.filter((s) => isSameDay(parseISO(s.startTime), selectedDate));
-  const dayCompleted = completedSessions(day);
-  const totalMin = dayCompleted.reduce((sum, s) => sum + s.actualMinutes, 0);
+  const stats = useMemo(() => {
+    const day = sessions.filter((s) => isSameDay(parseISO(s.startTime), selectedDate));
+    const dayCompleted = completedSessions(day);
+    const totalMin = dayCompleted.reduce((sum, s) => sum + s.actualMinutes, 0);
+    const dayTags = Array.from(new Set(dayCompleted.map((s) => s.tag))).sort();
+    const completed = completedSessions(sessions);
+    const allTags = Array.from(new Set(completed.map((s) => s.tag))).sort();
 
-  const dayTags = Array.from(new Set(dayCompleted.map((s) => s.tag))).sort();
-  const allTags = Array.from(new Set(completedSessions(sessions).map((s) => s.tag))).sort();
+    const hourly = Array.from({ length: 24 }).map((_, hour) => {
+      const row: Record<string, string | number> = { hour: hour.toString().padStart(2, "0") };
+      dayTags.forEach((tag) => (row[tag] = 0));
+      return row;
+    });
+    dayCompleted.forEach((s) => {
+      const h = parseISO(s.startTime).getHours();
+      hourly[h][s.tag] = (hourly[h][s.tag] as number) + s.actualMinutes;
+    });
 
-  const hourly = Array.from({ length: 24 }).map((_, hour) => {
-    const row: Record<string, string | number> = { hour: hour.toString().padStart(2, "0") };
-    dayTags.forEach((tag) => (row[tag] = 0));
-    return row;
-  });
-  dayCompleted.forEach((s) => {
-    const h = parseISO(s.startTime).getHours();
-    hourly[h][s.tag] = (hourly[h][s.tag] as number) + s.actualMinutes;
-  });
+    const weekly = Array.from({ length: 7 }).map((_, i) => {
+      const date = subDays(new Date(), 6 - i);
+      const row: Record<string, string | number> = { label: format(date, "MM-dd"), _date: date.toISOString() };
+      allTags.forEach((tag) => (row[tag] = 0));
+      return row;
+    });
+    completed.forEach((s) => {
+      const d = parseISO(s.startTime);
+      const row = weekly.find((w) => isSameDay(new Date(w._date as string), d));
+      if (row) row[s.tag] = (row[s.tag] as number) + s.actualMinutes;
+    });
 
-  const weekly = Array.from({ length: 7 }).map((_, i) => {
-    const date = subDays(new Date(), 6 - i);
-    const row: Record<string, string | number> = { label: format(date, "MM-dd"), _date: date.toISOString() };
-    allTags.forEach((tag) => (row[tag] = 0));
-    return row;
-  });
-  completedSessions(sessions).forEach((s) => {
-    const d = parseISO(s.startTime);
-    const row = weekly.find((w) => isSameDay(new Date(w._date as string), d));
-    if (row) row[s.tag] = (row[s.tag] as number) + s.actualMinutes;
-  });
-
-  const tags = tagStats(sessions).slice(0, 8);
+    return {
+      allTags,
+      dayTags,
+      hourly,
+      tags: tagStats(sessions).slice(0, 8),
+      totalMin,
+      weekly
+    };
+  }, [sessions, selectedDate]);
+  const { allTags, dayTags, hourly, tags, totalMin, weekly } = stats;
 
   return (
     <div className="space-y-6">

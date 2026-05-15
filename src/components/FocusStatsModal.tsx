@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { FocusSession } from "../types";
 import { tagColor } from "../lib/colors";
+import { useMemo } from "react";
 
 interface Props {
   open: boolean;
@@ -21,35 +22,40 @@ interface Props {
 }
 
 export function FocusStatsModal({ open, date, sessions, onClose }: Props) {
+  const stats = useMemo(() => {
+    const daySessions = sessions.filter((s) => isSameDay(parseISO(s.startTime), date));
+    const completed = daySessions.filter((s) => s.status === "completed");
+    const totalMin = completed.reduce((sum, s) => sum + s.actualMinutes, 0);
+    const failed = daySessions.filter((s) => s.status === "abandoned").length;
+    const dayTags = Array.from(new Set(completed.map((s) => s.tag))).sort();
+
+    const hourly = Array.from({ length: 24 }).map((_, hour) => {
+      const row: Record<string, string | number> = { hour: hour.toString().padStart(2, "0") };
+      dayTags.forEach((tag) => (row[tag] = 0));
+      return row;
+    });
+    completed.forEach((s) => {
+      const h = parseISO(s.startTime).getHours();
+      hourly[h][s.tag] = (hourly[h][s.tag] as number) + s.actualMinutes;
+    });
+
+    const tagMap = new Map<string, number>();
+    completed.forEach((s) => {
+      tagMap.set(s.tag, (tagMap.get(s.tag) ?? 0) + s.actualMinutes);
+    });
+    const topTags = Array.from(tagMap.entries())
+      .map(([tag, minutes]) => ({ tag, minutes }))
+      .sort((a, b) => b.minutes - a.minutes)
+      .slice(0, 8);
+
+    return { completed, dayTags, failed, hourly, topTags, totalMin };
+  }, [date, sessions]);
+  const { completed, dayTags, failed, hourly, topTags, totalMin } = stats;
+
   if (!open) return null;
 
-  const daySessions = sessions.filter((s) => isSameDay(parseISO(s.startTime), date));
-  const completed = daySessions.filter((s) => s.status === "completed");
-  const totalMin = completed.reduce((sum, s) => sum + s.actualMinutes, 0);
   const totalHours = Math.floor(totalMin / 60);
   const totalMins = totalMin % 60;
-  const failed = daySessions.filter((s) => s.status === "abandoned").length;
-
-  const dayTags = Array.from(new Set(completed.map((s) => s.tag))).sort();
-
-  const hourly = Array.from({ length: 24 }).map((_, hour) => {
-    const row: Record<string, string | number> = { hour: hour.toString().padStart(2, "0") };
-    dayTags.forEach((tag) => (row[tag] = 0));
-    return row;
-  });
-  completed.forEach((s) => {
-    const h = parseISO(s.startTime).getHours();
-    hourly[h][s.tag] = (hourly[h][s.tag] as number) + s.actualMinutes;
-  });
-
-  const tagMap = new Map<string, number>();
-  completed.forEach((s) => {
-    tagMap.set(s.tag, (tagMap.get(s.tag) ?? 0) + s.actualMinutes);
-  });
-  const topTags = Array.from(tagMap.entries())
-    .map(([tag, minutes]) => ({ tag, minutes }))
-    .sort((a, b) => b.minutes - a.minutes)
-    .slice(0, 8);
 
   return (
     <div

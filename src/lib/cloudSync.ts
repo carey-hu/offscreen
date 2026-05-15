@@ -269,7 +269,6 @@ function settingsFromCloud(c: CloudUserSettings): UserSettings {
 // ── Settings push (single-row, no conflict with deletes) ──────────────────
 
 function logPushErr(table: string, err: unknown) {
-  // eslint-disable-next-line no-console
   console.error(`[sync] push ${table} failed:`, err);
 }
 
@@ -349,7 +348,6 @@ async function drainTombstones(client: SupabaseClient, uid: string): Promise<voi
     if (!error) {
       clearTombstone(t.table, t.id);
     } else {
-      // eslint-disable-next-line no-console
       console.error(`[sync] tombstone retry ${t.table}/${t.id}:`, error.message);
     }
   }
@@ -413,7 +411,6 @@ export function scheduleSync(delayMs = 1500): void {
     scheduledTimer = null;
     const cb = syncCallback;
     if (cb) cb().catch((e) => {
-      // eslint-disable-next-line no-console
       console.error("[sync] scheduled sync failed:", e);
     });
   }, delayMs);

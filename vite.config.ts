@@ -29,5 +29,19 @@ export default defineConfig({
   ],
   server: {
     port: 5173
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("recharts")) return "vendor-charts";
+          if (id.includes("@supabase")) return "vendor-supabase";
+          if (id.includes("lucide-react")) return "vendor-icons";
+          if (id.includes("date-fns")) return "vendor-date";
+          return "vendor";
+        }
+      }
+    }
   }
 });

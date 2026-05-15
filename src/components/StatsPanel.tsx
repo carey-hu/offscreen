@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis
 } from "recharts";
+import { useMemo } from "react";
 import { FocusSession } from "../types";
 import { currentStreakDays, lastSevenDays, tagStats, totalMinutes } from "../lib/stats";
 import { StatCard } from "./StatCard";
@@ -25,17 +26,44 @@ interface Props {
 
 export function StatsPanel({ sessions, selectedDate, summaryOnly, onOpenFocusStats, onOpenSessionHistory, moodTodayCount, onOpenStarJar }: Props) {
   // Summary cards always reflect TODAY regardless of the navigated date
-  const todayRef = new Date();
-  const todaySess = sessions.filter((s) => isSameDay(parseISO(s.startTime), todayRef));
-  const todayCompleted = todaySess.filter((s) => s.status === "completed");
-  const todayTotal = totalMinutes(todayCompleted);
+  const todayStats = useMemo(() => {
+    const todayRef = new Date();
+    const todaySess = sessions.filter((s) => isSameDay(parseISO(s.startTime), todayRef));
+    const todayCompleted = todaySess.filter((s) => s.status === "completed");
+    return {
+      completed: todayCompleted,
+      total: totalMinutes(todayCompleted)
+    };
+  }, [sessions]);
+  const todayCompleted = todayStats.completed;
+  const todayTotal = todayStats.total;
   const todayHours = Math.floor(todayTotal / 60);
   const todayMins = todayTotal % 60;
 
   // Latest completed session (across all days, newest first since storage sorts by startTime desc)
-  const latestEver = sessions.find((s) => s.status === "completed");
+  const latestEver = useMemo(() => sessions.find((s) => s.status === "completed"), [sessions]);
   const latestMins = latestEver?.actualMinutes ?? 0;
   const latestTitle = latestEver?.title ?? "";
+
+  // Full view uses selectedDate.
+  const refDate = selectedDate ?? new Date();
+  const dateStats = useMemo(() => {
+    const dateSessions = sessions.filter((s) => isSameDay(parseISO(s.startTime), refDate));
+    const dateCompleted = dateSessions.filter((s) => s.status === "completed");
+    return {
+      total: totalMinutes(dateCompleted),
+      failed: dateSessions.filter((s) => s.status === "abandoned").length
+    };
+  }, [sessions, refDate]);
+  const dateTotal = dateStats.total;
+  const dateHours = Math.floor(dateTotal / 60);
+  const dateMins = dateTotal % 60;
+  const dateFailed = dateStats.failed;
+
+  const weekData = useMemo(() => lastSevenDays(sessions), [sessions]);
+  const tags = useMemo(() => tagStats(sessions).slice(0, 6), [sessions]);
+  const streak = useMemo(() => currentStreakDays(sessions), [sessions]);
+
   if (summaryOnly) {
     return (
       <div className="grid grid-cols-3 gap-3 sm:gap-6">
@@ -147,18 +175,6 @@ export function StatsPanel({ sessions, selectedDate, summaryOnly, onOpenFocusSta
   }
 
   // Full view — use selectedDate
-  const refDate = selectedDate ?? new Date();
-  const dateSessions = sessions.filter((s) => isSameDay(parseISO(s.startTime), refDate));
-  const dateCompleted = dateSessions.filter((s) => s.status === "completed");
-  const dateTotal = totalMinutes(dateCompleted);
-  const dateHours = Math.floor(dateTotal / 60);
-  const dateMins = dateTotal % 60;
-  const dateFailed = dateSessions.filter((s) => s.status === "abandoned").length;
-
-  const weekData = lastSevenDays(sessions);
-  const tags = tagStats(sessions).slice(0, 6);
-  const streak = currentStreakDays(sessions);
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-3 gap-4">
